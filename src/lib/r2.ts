@@ -21,6 +21,16 @@ function getR2() {
 
 export const isR2Configured = () => getR2() !== null;
 
+// Carries R2's S3 error code (AccessDenied, NoSuchBucket, SignatureDoesNotMatch…) so the
+// admin UI can say what's wrong with the setup
+export class R2Error extends Error {}
+
+async function ensureOk(res: Response, action: string) {
+  if (res.ok) return;
+  const code = (await res.text()).match(/<Code>([^<]+)<\/Code>/)?.[1];
+  throw new R2Error(`R2 ${action} failed (${res.status}${code ? ` ${code}` : ""})`);
+}
+
 const objectUrl = (bucketUrl: string, key: string) =>
   `${bucketUrl}/${key.split("/").map(encodeURIComponent).join("/")}`;
 
@@ -37,13 +47,13 @@ export async function r2Put(key: string, body: ArrayBuffer, contentType: string)
     body,
     headers: { "Content-Type": contentType },
   });
-  if (!res.ok) throw new Error(`R2 upload failed (${res.status}): ${await res.text()}`);
+  await ensureOk(res, "upload");
 }
 
 export async function r2Delete(key: string) {
   const { client, bucketUrl } = requireR2();
   const res = await client.fetch(objectUrl(bucketUrl, key), { method: "DELETE" });
-  if (!res.ok) throw new Error(`R2 delete failed (${res.status}): ${await res.text()}`);
+  await ensureOk(res, "delete");
 }
 
 const unescapeXml = (s: string) =>
@@ -58,7 +68,7 @@ const unescapeXml = (s: string) =>
 export async function r2List(prefix: string) {
   const { client, bucketUrl } = requireR2();
   const res = await client.fetch(`${bucketUrl}?list-type=2&prefix=${encodeURIComponent(prefix)}`);
-  if (!res.ok) throw new Error(`R2 list failed (${res.status}): ${await res.text()}`);
+  await ensureOk(res, "list");
   const xml = await res.text();
 
   return [...xml.matchAll(/<Contents>([\s\S]*?)<\/Contents>/g)].map(([, entry]) => ({

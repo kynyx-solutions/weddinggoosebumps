@@ -21,6 +21,53 @@ interface MediaLibraryProps {
   onSelect: (url: string) => void;
 }
 
+// Every upload is compressed in the browser first: re-encoded as high-quality WebP (visually
+// lossless) and capped at 2560px, which also keeps it under Vercel's 4.5 MB request limit.
+// Transparent PNGs keep their original lossless file when they fit; GIF/SVG/AVIF (animation,
+// vectors, already-efficient) are left alone, and a result that isn't smaller is discarded.
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+const MAX_DIMENSION = 2560;
+const QUALITY = 0.9;
+
+function hasTransparency(ctx: CanvasRenderingContext2D, width: number, height: number) {
+  const { data } = ctx.getImageData(0, 0, width, height);
+  for (let i = 3; i < data.length; i += 4) if (data[i] < 255) return true;
+  return false;
+}
+
+async function compressForUpload(file: File): Promise<File> {
+  const tooBig = file.size > MAX_UPLOAD_BYTES;
+  const compressible =
+    /^image\/(jpeg|png)$/.test(file.type) || (file.type === "image/webp" && tooBig);
+  if (!compressible) return file;
+
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, MAX_DIMENSION / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return file;
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+
+  const transparent = file.type === "image/png" && hasTransparency(ctx, canvas.width, canvas.height);
+  if (transparent && !tooBig) return file;
+
+  const encode = (type: string) =>
+    new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, QUALITY));
+  let blob = await encode("image/webp");
+  // Safari can't encode WebP (it hands back a PNG); JPEG would drop transparency, so keep the file
+  if (!blob || blob.type !== "image/webp") {
+    if (transparent) return file;
+    blob = await encode("image/jpeg");
+  }
+  if (!blob || (blob.size >= file.size && !tooBig)) return file;
+
+  const ext = blob.type === "image/webp" ? ".webp" : ".jpg";
+  return new File([blob], file.name.replace(/\.[^.]+$/, "") + ext, { type: blob.type });
+}
+
 export default function MediaLibrary({ open, folder, onClose, onSelect }: MediaLibraryProps) {
   const [images, setImages] = useState<MediaImage[]>([]);
   const [selected, setSelected] = useState("");
@@ -97,7 +144,7 @@ export default function MediaLibrary({ open, folder, onClose, onSelect }: MediaL
     try {
       const formData = new FormData();
 
-      formData.append("file", file);
+      formData.append("file", await compressForUpload(file));
       formData.append("folder", folder);
 
       const res = await fetch("/api/upload", {
@@ -105,12 +152,17 @@ export default function MediaLibrary({ open, folder, onClose, onSelect }: MediaL
         body: formData,
       });
 
-      const data = await res.json();
+      // Hosts can answer with a non-JSON error page (e.g. Vercel's 413 for large bodies)
+      const data = await res
+        .json()
+        .catch(() => ({ success: false, message: `Upload failed (${res.status})` }));
 
       if (data.success) {
         await loadImages();
 
         setSelected(data.url);
+      } else {
+        alert(data.message || "Upload failed");
       }
     } catch (err) {
       console.error(err);

@@ -9,8 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash2 } from "lucide-react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import Underline from "@tiptap/extension-underline";
-import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
 import TextAlign from "@tiptap/extension-text-align";
 import EditorToolbar from "./EditorToolbar";
@@ -33,9 +31,7 @@ export default function BlogEditor({ initialPost }: { initialPost: any }) {
   const [body, setBody] = useState(initialPost.body || "");
   const editor = useEditor({
     extensions: [
-      StarterKit,
-      Underline,
-      Link,
+      StarterKit, // v3 already bundles Underline and Link
       Image,
       TextAlign.configure({
         types: ["heading", "paragraph"],

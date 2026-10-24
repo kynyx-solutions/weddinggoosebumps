@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import { auth } from "@/lib/auth";
-import { isR2Configured, r2Put } from "@/lib/r2";
+import { isR2Configured, r2Put, R2Error } from "@/lib/r2";
+
+// Vercel and Cloudflare have no lasting disk, so uploads there only work through R2
+const onServerlessHost = () =>
+  Boolean(process.env.VERCEL) ||
+  (typeof navigator !== "undefined" && navigator.userAgent === "Cloudflare-Workers");
 
 const ALLOWED_FOLDERS = [
   "blog",
@@ -57,6 +62,15 @@ export async function POST(req: NextRequest) {
     if (isR2Configured()) {
       // Served at /uploads/... through the CDN rewrite in next.config.ts
       await r2Put(`uploads/${folder}/${filename}`, bytes, file.type || "application/octet-stream");
+    } else if (onServerlessHost()) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Image storage isn't set up on this server. Add R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY and R2_BUCKET to the hosting environment variables, then redeploy.",
+        },
+        { status: 500 }
+      );
     } else {
       // Local development without R2 credentials: write into public/
       const uploadDir = path.join(
@@ -84,7 +98,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: "Upload failed",
+        // admin-only route, so R2's error code is safe to show and says what to fix
+        message: err instanceof R2Error ? err.message : "Upload failed",
       },
       { status: 500 }
     );
