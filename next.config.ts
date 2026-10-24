@@ -5,13 +5,14 @@ import path from "node:path";
 const ASSET_HOST = process.env.NEXT_PUBLIC_ASSET_BASE ?? "https://img.weddinggoosebumps.com"; // R2 CDN
 
 const nextConfig: NextConfig = {
+  output: "export", // static HTML/CSS/JS output for Cloudflare Pages
   poweredByHeader: false,
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
 
   images: {
     formats: ["image/avif", "image/webp"],
-    unoptimized: false,
+    unoptimized: true, // Cloudflare Pages static hosting has no Next.js image optimization
     remotePatterns: [
       { protocol: "https", hostname: "img.weddinggoosebumps.com" },
       { protocol: "https", hostname: "images.unsplash.com" },
