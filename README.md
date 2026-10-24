@@ -34,8 +34,8 @@ This is a Next.js application with a custom CMS panel for managing content, SEO,
    npm run dev
    ```
    Open [http://localhost:3000/admin](http://localhost:3000/admin) and log in with:
-   - Email: `admin@example.com`
-   - Password: `admin123`
+   - Email: `***********************`
+   - Password: `***************************`
 
 ## Features & Modules
 
