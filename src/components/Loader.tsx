@@ -22,16 +22,20 @@ export default function Loader() {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#F8F5EF]">
       <div className="flex flex-col items-center">
+        {/* All slides mount at once so every image downloads up front; only the current
+            one is shown, so a swap never waits on the network */}
         <div className="relative h-44 w-44 md:h-56 md:w-56">
-          <Image
-            key={slides[index]}
-            src={slides[index]}
-            alt=""
-            fill
-            unoptimized
-            loading="eager"
-            className="animate-fade object-contain"
-          />
+          {slides.map((src, i) => (
+            <Image
+              key={src}
+              src={src}
+              alt=""
+              fill
+              unoptimized
+              loading="eager"
+              className={`object-contain ${i === index ? "animate-fade" : "opacity-0"}`}
+            />
+          ))}
         </div>
 
         <p className="mt-8 text-[13px] tracking-[0.4em] text-gray-700 uppercase">
