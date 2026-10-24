@@ -1,6 +1,5 @@
 // next.config.ts
 import type { NextConfig } from "next";
-import path from "node:path";
 import { ASSET_BASE, CDN_PATH_PREFIXES } from "./src/lib/assets";
 
 const nextConfig: NextConfig = {
@@ -24,12 +23,6 @@ const nextConfig: NextConfig = {
       source: `/${prefix}/:path*`,
       destination: `${ASSET_BASE}/${prefix}/:path*`,
     }));
-  },
-
-  webpack: (config) => {
-    config.resolve.alias = config.resolve.alias || {};
-    config.resolve.alias["@"] = path.resolve(__dirname, "src");
-    return config;
   },
 };
 
