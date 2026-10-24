@@ -133,12 +133,20 @@ export default function NavigationClient({ eventLinks }: NavigationClientProps) 
                   </li>
                 ))}
 
-                {/* EVENTS */}
+                {/* EVENTS — sm+: a plain link, since long event titles overflow the narrow
+                    see-through menu; phones keep the expandable list on the ivory panel */}
                 <li>
+                  <Link
+                    href="/events"
+                    className="font-lora hover:text-gold hidden text-[13px] tracking-[0.2em] text-white transition-colors duration-300 sm:block"
+                  >
+                    EVENTS
+                  </Link>
+
                   <button
                     type="button"
                     onClick={() => setHeroEventsOpen(!heroEventsOpen)}
-                    className="font-lora text-charcoal hover:text-gold flex items-center gap-2 text-[13px] tracking-[0.2em] transition-colors duration-300 sm:text-white"
+                    className="font-lora text-charcoal hover:text-gold flex items-center gap-2 text-[13px] tracking-[0.2em] transition-colors duration-300 sm:hidden"
                   >
                     EVENTS
                     <svg
@@ -155,12 +163,12 @@ export default function NavigationClient({ eventLinks }: NavigationClientProps) 
                   </button>
 
                   {heroEventsOpen && (
-                    <div className="mt-3 flex flex-col items-center">
+                    <div className="mt-3 flex flex-col items-center sm:hidden">
                       {eventLinks.map((item) => (
                         <Link
                           key={item.slug}
                           href={`/events/${item.slug}`}
-                          className="font-lora text-charcoal hover:text-gold block border-b border-[#ebe6de] py-2.5 text-[11px] tracking-[0.2em] uppercase transition-colors last:border-none sm:border-white/20 sm:text-white/90"
+                          className="font-lora text-charcoal hover:text-gold block border-b border-[#ebe6de] py-2.5 text-[11px] tracking-[0.2em] uppercase transition-colors last:border-none"
                         >
                           {item.title}
                         </Link>

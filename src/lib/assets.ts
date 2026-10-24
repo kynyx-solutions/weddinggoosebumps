@@ -16,6 +16,8 @@ export const CDN_PATH_PREFIXES = [
   "offerings-page",
   "videos",
   "inquire-page",
+  // admin uploads (src/lib/r2.ts); a file still in public/uploads is served before this rewrite
+  "uploads",
 ];
 
 export function r2(path: string) {
