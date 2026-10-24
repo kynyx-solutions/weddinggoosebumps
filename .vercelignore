@@ -27,3 +27,6 @@ public/**/hires/**
 **/*.avif
 **/*.gif
 **/*.svg
+
+# except the route loader's small illustrations (~20 KB each), which aren't on the CDN
+!public/loader/*.webp
