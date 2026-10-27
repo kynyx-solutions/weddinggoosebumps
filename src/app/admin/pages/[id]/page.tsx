@@ -1,8 +1,10 @@
 import prisma from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import PageEditor from "@/components/admin/page-editor";
 
 export default async function EditPage({ params }: { params: Promise<{ id: string }> }) {
+  await requireAdmin();
   const { id } = await params;
   const page = await prisma.page.findUnique({
     where: { id },

@@ -1,7 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import prisma from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth";
 
 export default async function AdminDashboard() {
+  await requireAdmin();
   const [pagesCount, blogCount, leadsCount] = await Promise.all([
     prisma.page.count(),
     prisma.blogPost.count(),

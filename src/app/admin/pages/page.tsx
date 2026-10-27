@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +14,7 @@ const STATIC_PAGES = [
 ];
 
 export default async function PagesList() {
+  await requireAdmin();
   // Sync static pages dynamically
   for (const p of STATIC_PAGES) {
     await prisma.page.upsert({

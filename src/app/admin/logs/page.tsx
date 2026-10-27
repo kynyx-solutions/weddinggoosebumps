@@ -1,7 +1,9 @@
 import prisma from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default async function ActivityLogsList() {
+  await requireAdmin();
   const logs = await prisma.activityLog.findMany({
     orderBy: { createdAt: "desc" },
     include: { user: true },

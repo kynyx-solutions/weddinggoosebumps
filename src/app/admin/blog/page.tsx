@@ -1,10 +1,12 @@
 import prisma from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus } from "lucide-react";
 
 export default async function BlogList() {
+  await requireAdmin();
   const posts = await prisma.blogPost.findMany({
     orderBy: { createdAt: "desc" }
   });

@@ -1,8 +1,10 @@
 import prisma from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import BlogEditor from "@/components/admin/blog-editor";
 
 export default async function EditBlogPost({ params }: { params: Promise<{ id: string }> }) {
+  await requireAdmin();
   const { id } = await params;
   
   const post = await prisma.blogPost.findUnique({

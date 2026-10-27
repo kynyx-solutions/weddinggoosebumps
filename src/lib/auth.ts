@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { redirect } from "next/navigation";
 import prisma from "./prisma";
 import bcrypt from "bcryptjs";
 
@@ -67,3 +68,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: "/login",
   },
 });
+
+// Admin pages render in parallel with the admin layout, so the layout's login redirect doesn't
+// stop a page's own queries from streaming data to logged-out visitors. Every admin page that
+// loads data calls this before querying.
+export async function requireAdmin() {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+  return session;
+}
