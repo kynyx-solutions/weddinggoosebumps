@@ -248,6 +248,10 @@
   animation: loader-cycle 2.7s linear infinite both;
 }
 
+/* scrolls (wheel, trackpad, touch) without showing a scrollbar — the header's Events dropdown */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
 /* opening logo screen (components/SplashScreen.tsx): fades out from 2.2 s so it's gone by 2.7 s
    even if the page's script is slow; the script ends it earlier once the page has loaded */
 #wg-splash { animation: wg-splash-out .5s ease 2.2s forwards; }

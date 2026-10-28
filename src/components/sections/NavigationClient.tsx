@@ -270,7 +270,7 @@ export default function NavigationClient({ eventLinks, whatsappHref }: Navigatio
                   <div className="invisible absolute top-full right-0 z-50 w-72 rounded-l-md border border-r-0 border-[#e8e1d8] bg-white opacity-0 shadow-[0_12px_40px_rgba(0,0,0,0.08)] transition-all duration-300 group-hover:visible group-hover:opacity-100">
                     {/* Event Links: scroll once there are more than fit below the header, so every
                         event and "View All Events" stay reachable */}
-                    <div className="max-h-[calc(100vh-13rem)] overflow-y-auto overscroll-contain py-3">
+                    <div className="no-scrollbar max-h-[calc(100vh-13rem)] overflow-y-auto overscroll-contain py-3">
                       {eventLinks.map((item) => (
                         <Link
                           key={item.slug}
