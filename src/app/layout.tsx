@@ -105,7 +105,7 @@ export default function RootLayout({
 
         <ErrorReporter />
         <UtmCapture />
-        <NextTopLoader color="#2563eb" height={3} showSpinner={false} />
+        <NextTopLoader color="#F8F5EF" height={3} showSpinner={false} />
         <SplashScreen />
         {children}
       </body>
