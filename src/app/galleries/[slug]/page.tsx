@@ -3,14 +3,16 @@ import Image from "next/image";
 import Navigation from "@/components/sections/navigation";
 import { notFound } from "next/navigation";
 import galleries from "../image-gallery";
+import { getGalleryPhotos } from "@/lib/galleries";
 
 type Image = { src: string; width: number; height: number; alt?: string };
 const data = galleries as Record<string, Image[]>;
 
 export default async function GallerySlugPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const images = data[slug];
-  if (!images) notFound();
+  // Albums managed in the admin panel first, then the built-in ones
+  const images = (await getGalleryPhotos(slug)) ?? data[slug];
+  if (!images || images.length === 0) notFound();
 
   return (
     <main className="bg-ivory text-charcoal">

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { readStoredUtm } from "@/components/utm-capture";
 
 interface FormData {
   name: string;
@@ -20,6 +21,9 @@ export default function InquiryForm() {
 
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
+  // Spam checks: how long the form was open, and a hidden field only bots fill in
+  const openedAt = useRef(Date.now());
+  const trapRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -44,6 +48,9 @@ export default function InquiryForm() {
           phone: formData.phone,
           message: formData.message,
           sourcePage: "/inquire",
+          ...readStoredUtm(),
+          elapsedMs: Date.now() - openedAt.current,
+          wg_hp: trapRef.current?.value ?? "",
         }),
       });
 
@@ -70,6 +77,18 @@ export default function InquiryForm() {
       onSubmit={handleSubmit}
       className="flex flex-col space-y-6 max-w-lg text-left"
     >
+      {/* Not shown to people; bots that fill every field get their inquiry filed as spam */}
+      <input
+        ref={trapRef}
+        type="text"
+        name="wg_hp"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        className="hidden"
+        defaultValue=""
+      />
+
       {/* Name */}
       <div>
         <label className="block text-sm text-gray-600 mb-1">Name</label>

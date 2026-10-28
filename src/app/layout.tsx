@@ -3,6 +3,7 @@ import "./globals.css";
 import ErrorReporter from "@/components/ErrorReporter";
 import NextTopLoader from "nextjs-toploader";
 import Script from "next/script";
+import UtmCapture from "@/components/utm-capture";
 
 export const metadata: Metadata = {
   title: {
@@ -95,6 +96,7 @@ export default function RootLayout({
         </noscript>
 
         <ErrorReporter />
+        <UtmCapture />
         <NextTopLoader color="#2563eb" height={3} showSpinner={false} />
         {children}
       </body>

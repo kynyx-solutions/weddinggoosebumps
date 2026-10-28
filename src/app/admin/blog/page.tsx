@@ -4,12 +4,45 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus } from "lucide-react";
+import PostsTable from "./PostsTable";
 
-export default async function BlogList() {
+const TRASH_DAYS = 30;
+const dateFormat = new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" });
+
+export default async function BlogList({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string }>;
+}) {
   await requireAdmin();
-  const posts = await prisma.blogPost.findMany({
-    orderBy: { createdAt: "desc" }
+  const { view } = await searchParams;
+  const trash = view === "trash";
+
+  // Posts left in the trash for 30 days are deleted for good
+  await prisma.blogPost.deleteMany({
+    where: { deletedAt: { lt: new Date(Date.now() - TRASH_DAYS * 24 * 60 * 60 * 1000) } },
   });
+
+  const [posts, activeCount, trashCount] = await Promise.all([
+    prisma.blogPost.findMany({
+      where: { deletedAt: trash ? { not: null } : null },
+      orderBy: trash ? { deletedAt: "desc" } : { createdAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        status: true,
+        publishDate: true,
+        createdAt: true,
+        updatedAt: true,
+        deletedAt: true,
+        destination: { select: { name: true } },
+        categories: { select: { category: { select: { name: true } } } },
+      },
+    }),
+    prisma.blogPost.count({ where: { deletedAt: null } }),
+    prisma.blogPost.count({ where: { deletedAt: { not: null } } }),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -22,45 +55,25 @@ export default async function BlogList() {
           </Button>
         </Link>
       </div>
-      
+
       <Card>
         <CardContent className="p-0">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="px-6 py-4 font-medium text-gray-900">Title</th>
-                <th className="px-6 py-4 font-medium text-gray-900">Status</th>
-                <th className="px-6 py-4 font-medium text-gray-900 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {posts.length === 0 && (
-                <tr>
-                  <td colSpan={3} className="px-6 py-8 text-center text-gray-500">
-                    No blog posts found.
-                  </td>
-                </tr>
-              )}
-              {posts.map((post) => (
-                <tr key={post.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">{post.title}</td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-800">
-                      {post.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <Link href={`/admin/blog/${post.id}`}>
-                      <Button variant="outline" size="sm" className="mr-2">Edit</Button>
-                    </Link>
-                    <Link href={`/blog${post.slug.startsWith('/') ? post.slug : `/${post.slug}`}`} target="_blank">
-                      <Button variant="secondary" size="sm">Preview</Button>
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <PostsTable
+            trash={trash}
+            activeCount={activeCount}
+            trashCount={trashCount}
+            posts={posts.map((post) => ({
+              id: post.id,
+              title: post.title,
+              slug: post.slug,
+              status: post.status,
+              dateLabel: dateFormat.format(post.publishDate ?? post.createdAt),
+              updatedLabel: dateFormat.format(post.updatedAt),
+              trashedLabel: post.deletedAt ? dateFormat.format(post.deletedAt) : null,
+              destination: post.destination?.name ?? null,
+              categories: post.categories.map((c) => c.category.name),
+            }))}
+          />
         </CardContent>
       </Card>
     </div>

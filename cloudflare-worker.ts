@@ -2,6 +2,7 @@
 // @ts-ignore `.open-next/worker.js` is generated at build time
 import { default as handler } from "./.open-next/worker.js";
 import { ASSET_BASE, CDN_PATH_PREFIXES } from "./src/lib/assets";
+import { mediaOrigin } from "./src/lib/storage";
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
@@ -11,7 +12,7 @@ export default {
     // OpenNext's image optimizer reads local paths from the Worker's static assets and
     // skips the next.config.ts rewrites, so CDN-backed paths are passed as full CDN URLs.
     if (src && CDN_PATH_PREFIXES.some((prefix) => src.startsWith(`/${prefix}/`))) {
-      url.searchParams.set("url", `${ASSET_BASE}${src}`);
+      url.searchParams.set("url", `${mediaOrigin(src.split("/")[1], ASSET_BASE)}${src}`);
       return handler.fetch(new Request(url, request), env, ctx);
     }
 

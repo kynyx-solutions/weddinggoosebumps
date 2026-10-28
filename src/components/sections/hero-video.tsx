@@ -2,10 +2,13 @@
 "use client";
 
 import Image from "next/image";
+import { r2 } from "@/lib/assets";
 
 const LOGO_URL = "/logo/Logo.png";
 const TEXT_LOGO_URL = "/logo/Text Logo.png";
-const HERO_VIDEO_URL = "/videos/home-page-vids/Top Slide.webm";
+// Straight from the R2 CDN: at 148 MB it's over the Cloudinary free-plan video limit, so it
+// isn't among the copies there
+const HERO_VIDEO_URL = r2("videos/home-page-vids/Top Slide.webm");
 
 export default function HeroVideo() {
   return (

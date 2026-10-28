@@ -40,8 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
-.env*.local
+# media: photos and videos are served from Cloudinary / the R2 CDN (src/lib/storage.ts),
+# and admin uploads only land here in local development, so none of it is committed
+/public/uploads/
 
 # cloudflare (opennext)
 .open-next

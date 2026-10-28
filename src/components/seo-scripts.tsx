@@ -1,9 +1,7 @@
-import prisma from "@/lib/prisma";
+import { getSeoPage } from "@/lib/seo";
 
 export default async function SeoScripts({ slug }: { slug: string }) {
-  const page = await prisma.page.findUnique({
-    where: { slug }
-  });
+  const page = await getSeoPage(slug);
   // console.log("page url");
   // console.log(page);
   if (!page || !page.structuredData) {

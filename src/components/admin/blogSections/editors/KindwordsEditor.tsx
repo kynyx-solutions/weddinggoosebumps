@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import MediaLibrary from "@/components/media/MediaLibrary";
+import { saveBlogSection, useSectionSave } from "@/components/admin/post-save";
 
+import { toast } from "@/components/admin/toast";
 interface KindwordsEditorProps {
   blogId: string;
 }
@@ -24,6 +26,11 @@ export default function KindwordsEditor({ blogId }: KindwordsEditorProps) {
     bigImage: "",
   });
     const SECTION_NAME = "kindWords";
+  const [loaded, setLoaded] = useState(false);
+
+  const save = useSectionSave(SECTION_NAME, kindWords, loaded, (content, autosave) =>
+    saveBlogSection(blogId, SECTION_NAME, content, autosave)
+  );
      useEffect(() => {
        const loadKindwords = async () => {
          try {
@@ -42,6 +49,8 @@ export default function KindwordsEditor({ blogId }: KindwordsEditorProps) {
            }
          } catch (err) {
            console.error(err);
+         } finally {
+           setLoaded(true);
          }
        };
 
@@ -52,28 +61,12 @@ export default function KindwordsEditor({ blogId }: KindwordsEditorProps) {
     try {
       setIsSaving(true);
 
-      const res = await fetch("/api/blog-sections", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          blogId,
-          section: SECTION_NAME,
-          content: kindWords,
-        }),
-      });
+      const data = await save({ force: true });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message);
-      }
-
-      alert(data.message);
+      toast(data?.message ?? "Section saved");
     } catch (error) {
       console.error(error);
-      alert("Failed to save kindWords section.");
+      toast("Failed to save kindWords section.");
     } finally {
       setIsSaving(false);
     }

@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { authorize } from "@/lib/auth";
+import { logActivity } from "@/lib/activity";
+import { PAGES_TAG } from "@/lib/seo";
+import { refreshPublicPages } from "@/lib/site";
 
 export async function POST(req: Request) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
+    const access = await authorize("seo");
+    if ("denied" in access) return access.denied;
+    const { session } = access;
 
     const json = await req.json();
     const { title, slug, status } = json;
@@ -23,6 +25,9 @@ export async function POST(req: Request) {
         status: status || "Draft",
       },
     });
+
+    refreshPublicPages(PAGES_TAG);
+    await logActivity(session.user.id, `Created page ${page.slug}`, "Pages", { pageId: page.id });
 
     return NextResponse.json(page);
   } catch (error) {

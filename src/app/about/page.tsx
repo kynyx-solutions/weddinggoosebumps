@@ -11,6 +11,7 @@ import JournalSection from "@/components/sections/journal";
 import Footer from "@/components/sections/footer";
 import { getPageMetadata } from "@/lib/seo";
 import SeoScripts from "@/components/seo-scripts";
+import StatsBand from "@/components/sections/stats-band";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,7 @@ export default function Home() {
       <KindWords />
       <JournalSection />
       <ScrollVideo3 />
+      <StatsBand />
       <Footer />
     </main>
   );

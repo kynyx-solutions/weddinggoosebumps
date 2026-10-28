@@ -1,19 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
-import { auth } from "@/lib/auth";
-import { isR2Configured, r2Delete, r2List } from "@/lib/r2";
+import prisma from "@/lib/prisma";
+import { authorize } from "@/lib/auth";
+import { logActivity } from "@/lib/activity";
+import { r2Delete, r2List } from "@/lib/r2";
+import { cloudinaryDelete, cloudinaryList } from "@/lib/cloudinary";
+import { uploadStore } from "@/lib/storage";
 
 const ALLOWED_FOLDERS = ["blog", "pages", "seo", "gallery", "hero", "team", "temp"];
 const IMAGE_FILE = /\.(jpg|jpeg|png|gif|webp|svg|avif)$/i;
+
+// Adds each image's saved description (alt text)
+async function withAlt<T extends { url: string }>(images: T[]) {
+  const assets = await prisma.mediaAsset.findMany({
+    where: { url: { in: images.map((image) => image.url) } },
+    select: { url: true, alt: true },
+  });
+  const alts = new Map(assets.map((asset) => [asset.url, asset.alt ?? ""]));
+  return images.map((image) => ({ ...image, alt: alts.get(image.url) ?? "" }));
+}
 
 const unauthorized = () =>
   NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user) return unauthorized();
+    const access = await authorize(null);
+    if ("denied" in access) return access.denied;
 
     const folder = req.nextUrl.searchParams.get("folder") || "blog";
 
@@ -27,8 +41,11 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    if (isR2Configured()) {
-      const images = (await r2List(`uploads/${folder}/`))
+    const store = uploadStore();
+    if (store !== "local") {
+      const objects =
+        store === "cloudinary" ? await cloudinaryList(`uploads/${folder}/`) : await r2List(`uploads/${folder}/`);
+      const images = objects
         .map((object) => ({
           name: object.key.slice(`uploads/${folder}/`.length),
           url: `/${object.key}`,
@@ -40,7 +57,7 @@ export async function GET(req: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        images,
+        images: await withAlt(images),
       });
     }
 
@@ -71,7 +88,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      images,
+      images: await withAlt(images),
     });
   } catch (error) {
     console.error(error);
@@ -88,8 +105,9 @@ export async function GET(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user) return unauthorized();
+    const access = await authorize("content");
+    if ("denied" in access) return access.denied;
+    const { session } = access;
 
     const { folder, name } = await req.json();
 
@@ -104,8 +122,11 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    if (isR2Configured()) {
-      await r2Delete(`uploads/${folder}/${name}`);
+    const store = uploadStore();
+    if (store !== "local") {
+      if (store === "cloudinary") await cloudinaryDelete(`uploads/${folder}/${name}`);
+      else await r2Delete(`uploads/${folder}/${name}`);
+      await logActivity(session.user.id, `Deleted image ${name}`, "Media", { folder });
 
       return NextResponse.json({
         success: true,
@@ -126,6 +147,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     fs.unlinkSync(filePath);
+    await logActivity(session.user.id, `Deleted image ${name}`, "Media", { folder });
 
     return NextResponse.json({
       success: true,

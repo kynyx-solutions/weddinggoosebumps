@@ -2,10 +2,17 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import Footer from "@/components/sections/footer";
 import { useEffect, useRef, useState } from "react";
 
-export default function OfferingsPage() {
+// beforeFooter: server-rendered sections (the FAQ) placed between the last section and the footer.
+// footer: the site footer, rendered on the server because it reads the address from the database.
+export default function OfferingsPage({
+  beforeFooter,
+  footer,
+}: {
+  beforeFooter?: React.ReactNode;
+  footer: React.ReactNode;
+}) {
   // ── Slideshow state (for the centered slideshow above "Our approach")
   const SLIDES = [
     "/offerings-page/slide-section/main.jpg",
@@ -551,7 +558,8 @@ export default function OfferingsPage() {
         <div className="absolute inset-0 bg-black/25 pb-40" />
       </section>
 
-      <Footer />
+      {beforeFooter}
+      {footer}
     </main>
   );
 }

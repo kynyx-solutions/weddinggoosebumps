@@ -5,12 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useSectionSave } from "@/components/admin/post-save";
+import SeoAssistant, { LengthHint, type SeoPostInfo } from "./SeoAssistant";
 
+import { toast } from "@/components/admin/toast";
 interface SeoEditorProps {
   blogId: string;
+  // Current title, address, excerpt... from the editor, for the previews and checks
+  post: SeoPostInfo;
 }
 
-export default function SeoEditor({ blogId }: SeoEditorProps) {
+export default function SeoEditor({ blogId, post }: SeoEditorProps) {
   const [metaTitle, setMetaTitle] = useState("");
   const [metaKeywords, setMetaKeywords] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
@@ -45,7 +50,7 @@ export default function SeoEditor({ blogId }: SeoEditorProps) {
         setStructuredData(post.structuredData || "");
       } catch (err) {
         console.error(err);
-        alert("Unable to load SEO data");
+        toast("Unable to load SEO data");
       } finally {
         setLoading(false);
       }
@@ -54,34 +59,43 @@ export default function SeoEditor({ blogId }: SeoEditorProps) {
     loadSeo();
   }, [blogId]);
 
-  const handleSave = async () => {
-    setIsSaving(true);
-
-    try {
-      const res = await fetch(`/api/blog/${blogId}`, {
+  const save = useSectionSave(
+    "seo",
+    {
+      metaTitle,
+      metaKeywords,
+      metaDescription,
+      canonicalUrl,
+      ogTitle,
+      ogDescription,
+      ogImage,
+      robots,
+      structuredData,
+    },
+    !loading,
+    async (content, autosave) => {
+      const res = await fetch(`/api/blog/${blogId}${autosave ? "?autosave=1" : ""}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          metaTitle,
-          metaKeywords,
-          metaDescription,
-          canonicalUrl,
-          ogTitle,
-          ogDescription,
-          ogImage,
-          robots,
-          structuredData,
-        }),
+        body: JSON.stringify(content),
       });
 
       if (!res.ok) throw new Error();
+    }
+  );
 
-      alert("SEO Saved Successfully");
+  const handleSave = async () => {
+    setIsSaving(true);
+
+    try {
+      await save({ force: true });
+
+      toast("SEO Saved Successfully");
     } catch (err) {
       console.error(err);
-      alert("Failed to save SEO");
+      toast("Failed to save SEO");
     } finally {
       setIsSaving(false);
     }
@@ -98,6 +112,17 @@ export default function SeoEditor({ blogId }: SeoEditorProps) {
       </CardHeader>
 
       <CardContent className="space-y-5">
+        <SeoAssistant
+          post={post}
+          values={{ metaTitle, metaKeywords, metaDescription, ogTitle, ogDescription, ogImage }}
+          onFill={(changes) => {
+            if (changes.metaTitle !== undefined) setMetaTitle(changes.metaTitle);
+            if (changes.metaDescription !== undefined) setMetaDescription(changes.metaDescription);
+            if (changes.ogTitle !== undefined) setOgTitle(changes.ogTitle);
+            if (changes.ogDescription !== undefined) setOgDescription(changes.ogDescription);
+          }}
+        />
+
         <div className="space-y-2">
           <Label>Meta Title</Label>
           <Input
@@ -105,6 +130,7 @@ export default function SeoEditor({ blogId }: SeoEditorProps) {
             onChange={(e) => setMetaTitle(e.target.value)}
             placeholder="Leave blank to use post title"
           />
+          <LengthHint length={(metaTitle || post.title).length} max={60} />
         </div>
 
         <div className="space-y-2">
@@ -123,6 +149,7 @@ export default function SeoEditor({ blogId }: SeoEditorProps) {
             value={metaDescription}
             onChange={(e) => setMetaDescription(e.target.value)}
           />
+          <LengthHint length={(metaDescription || post.excerpt).length} max={160} />
         </div>
 
         <div className="space-y-2">

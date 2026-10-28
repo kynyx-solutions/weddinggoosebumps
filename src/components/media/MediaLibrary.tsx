@@ -7,18 +7,21 @@ import { Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
+import { toast } from "@/components/admin/toast";
 interface MediaImage {
   name: string;
   url: string;
   size: number;
   createdAt: string;
+  alt?: string;
 }
 
 interface MediaLibraryProps {
   open: boolean;
   folder: string;
   onClose: () => void;
-  onSelect: (url: string) => void;
+  // alt: the description saved for that image, if any
+  onSelect: (url: string, alt?: string) => void;
 }
 
 // Every upload is compressed in the browser first: re-encoded as high-quality WebP (visually
@@ -35,7 +38,8 @@ function hasTransparency(ctx: CanvasRenderingContext2D, width: number, height: n
   return false;
 }
 
-async function compressForUpload(file: File): Promise<File> {
+// Also used by the album editor for bulk photo uploads
+export async function compressForUpload(file: File): Promise<File> {
   const tooBig = file.size > MAX_UPLOAD_BYTES;
   const compressible =
     /^image\/(jpeg|png)$/.test(file.type) || (file.type === "image/webp" && tooBig);
@@ -68,9 +72,17 @@ async function compressForUpload(file: File): Promise<File> {
   return new File([blob], file.name.replace(/\.[^.]+$/, "") + ext, { type: blob.type });
 }
 
+const FOLDERS = ["blog", "pages", "gallery", "hero", "team", "seo", "temp"];
+
 export default function MediaLibrary({ open, folder, onClose, onSelect }: MediaLibraryProps) {
   const [images, setImages] = useState<MediaImage[]>([]);
   const [selected, setSelected] = useState("");
+  // Starts in the folder the caller asked for; any folder can be browsed
+  const [currentFolder, setCurrentFolder] = useState(folder);
+  const [query, setQuery] = useState("");
+  const [progress, setProgress] = useState("");
+  const [altDraft, setAltDraft] = useState("");
+  const [altSaved, setAltSaved] = useState(true);
 
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -80,15 +92,47 @@ export default function MediaLibrary({ open, folder, onClose, onSelect }: MediaL
 
   useEffect(() => {
     if (open) {
+      setCurrentFolder(folder);
+      setQuery("");
+    }
+  }, [open, folder]);
+
+  useEffect(() => {
+    if (open) {
       loadImages();
     }
-  }, [open]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, currentFolder]);
+
+  const selectedImage = images.find((img) => img.url === selected);
+  useEffect(() => {
+    setAltDraft(selectedImage?.alt ?? "");
+    setAltSaved(true);
+  }, [selected, selectedImage?.alt]);
+
+  const visibleImages = query.trim()
+    ? images.filter((img) => img.name.toLowerCase().includes(query.trim().toLowerCase()))
+    : images;
+
+  async function saveAlt() {
+    const res = await fetch("/api/media/alt", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: selected, alt: altDraft }),
+    });
+    if (!res.ok) {
+      toast("Could not save the description");
+      return;
+    }
+    setImages((current) => current.map((img) => (img.url === selected ? { ...img, alt: altDraft } : img)));
+    setAltSaved(true);
+  }
 
   async function loadImages() {
     setLoading(true);
 
     try {
-      const res = await fetch(`/api/media?folder=${folder}`);
+      const res = await fetch(`/api/media?folder=${currentFolder}`);
 
       const data = await res.json();
 
@@ -103,7 +147,15 @@ export default function MediaLibrary({ open, folder, onClose, onSelect }: MediaL
   }
 
   async function deleteImage(name: string) {
-    if (!confirm("Delete this image?")) return;
+    // Warn when the image is still on the website somewhere
+    const url = `/uploads/${currentFolder}/${name}`;
+    const usage = await fetch(`/api/media/usage?url=${encodeURIComponent(url)}`)
+      .then((res) => (res.ok ? res.json() : { usedIn: [] }))
+      .catch(() => ({ usedIn: [] }));
+    const question = usage.usedIn?.length
+      ? `This image is used in: ${usage.usedIn.join(", ")}. Deleting it leaves a gap there. Delete anyway?`
+      : "Delete this image?";
+    if (!confirm(question)) return;
 
     setDeleting(name);
 
@@ -114,7 +166,7 @@ export default function MediaLibrary({ open, folder, onClose, onSelect }: MediaL
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          folder,
+          folder: currentFolder,
           name,
         }),
       });
@@ -128,24 +180,40 @@ export default function MediaLibrary({ open, folder, onClose, onSelect }: MediaL
 
         loadImages();
       } else {
-        alert(data.error || "Delete failed");
+        toast(data.error || "Delete failed");
       }
     } catch (err) {
       console.error(err);
-      alert("Delete failed");
+      toast("Delete failed");
     } finally {
       setDeleting("");
     }
   }
 
-  async function uploadImage(file: File) {
+  // Several files go up one after another; each is compressed in the browser first
+  async function uploadImages(files: File[]) {
     setUploading(true);
+    let lastUrl = "";
+    try {
+      for (const [index, file] of files.entries()) {
+        if (files.length > 1) setProgress(`Uploading ${index + 1} of ${files.length}...`);
+        lastUrl = (await uploadImage(file)) || lastUrl;
+      }
+    } finally {
+      await loadImages();
+      if (lastUrl) setSelected(lastUrl);
+      setProgress("");
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
 
+  async function uploadImage(file: File): Promise<string | null> {
     try {
       const formData = new FormData();
 
       formData.append("file", await compressForUpload(file));
-      formData.append("folder", folder);
+      formData.append("folder", currentFolder);
 
       const res = await fetch("/api/upload", {
         method: "POST",
@@ -158,19 +226,15 @@ export default function MediaLibrary({ open, folder, onClose, onSelect }: MediaL
         .catch(() => ({ success: false, message: `Upload failed (${res.status})` }));
 
       if (data.success) {
-        await loadImages();
-
-        setSelected(data.url);
-      } else {
-        alert(data.message || "Upload failed");
+        return data.url;
       }
+      toast(data.message || `Upload failed for ${file.name}`);
     } catch (err) {
       console.error(err);
 
-      alert("Upload failed");
-    } finally {
-      setUploading(false);
+      toast(`Upload failed for ${file.name}`);
     }
+    return null;
   }
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -179,21 +243,46 @@ export default function MediaLibrary({ open, folder, onClose, onSelect }: MediaL
           <DialogTitle>Media Library</DialogTitle>
         </DialogHeader>
 
-        <div className="flex items-center justify-between border-b p-6">
+        <div className="flex flex-wrap items-center gap-3 border-b p-6">
           <Button onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-            {uploading ? "Uploading..." : "Upload Image"}
+            {uploading ? progress || "Uploading..." : "Upload Images"}
           </Button>
 
           <input
             ref={fileInputRef}
             type="file"
             hidden
+            multiple
             accept="image/*"
             onChange={(e) => {
-              const file = e.target.files?.[0];
+              const files = Array.from(e.target.files ?? []);
 
-              if (file) uploadImage(file);
+              if (files.length) uploadImages(files);
             }}
+          />
+
+          <select
+            aria-label="Folder"
+            className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm capitalize"
+            value={currentFolder}
+            onChange={(e) => {
+              setCurrentFolder(e.target.value);
+              setSelected("");
+            }}
+          >
+            {FOLDERS.map((name) => (
+              <option key={name} value={name}>
+                {name} folder
+              </option>
+            ))}
+          </select>
+
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by file name"
+            className="h-10 min-w-[200px] flex-1 rounded-md border border-slate-200 px-3 text-sm"
           />
         </div>
 
@@ -201,14 +290,14 @@ export default function MediaLibrary({ open, folder, onClose, onSelect }: MediaL
           <div className="flex flex-1 items-center justify-center text-gray-500">
             Loading Images...
           </div>
-        ) : images.length === 0 ? (
+        ) : visibleImages.length === 0 ? (
           <div className="flex flex-1 items-center justify-center text-gray-500">
-            No images found.
+            {images.length === 0 ? "No images in this folder yet." : "No images match."}
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto p-6">
             <div className="grid grid-cols-2 gap-5 md:grid-cols-4 lg:grid-cols-6">
-              {images.map((img) => (
+              {visibleImages.map((img) => (
                 <div
                   key={img.name}
                   onClick={() => setSelected(img.url)}
@@ -220,7 +309,7 @@ export default function MediaLibrary({ open, folder, onClose, onSelect }: MediaL
                 >
                   <Image
                     src={img.url}
-                    alt={img.name}
+                    alt={img.alt || img.name}
                     width={300}
                     height={300}
                     className="aspect-square w-full object-cover"
@@ -247,7 +336,23 @@ export default function MediaLibrary({ open, folder, onClose, onSelect }: MediaL
           </div>
         )}
 
-        <div className="flex justify-end gap-3 border-t p-6">
+        <div className="flex flex-wrap items-center justify-end gap-3 border-t p-6">
+          {selected && (
+            <div className="mr-auto flex min-w-[280px] flex-1 items-center gap-2">
+              <input
+                value={altDraft}
+                onChange={(e) => {
+                  setAltDraft(e.target.value);
+                  setAltSaved(false);
+                }}
+                placeholder="Describe this photo for Google and screen readers"
+                className="h-10 flex-1 rounded-md border border-slate-200 px-3 text-sm"
+              />
+              <Button type="button" variant="outline" onClick={saveAlt} disabled={altSaved}>
+                {altSaved && altDraft ? "Saved" : "Save description"}
+              </Button>
+            </div>
+          )}
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
@@ -255,7 +360,7 @@ export default function MediaLibrary({ open, folder, onClose, onSelect }: MediaL
           <Button
             disabled={!selected}
             onClick={() => {
-              onSelect(selected);
+              onSelect(selected, altDraft || undefined);
 
               onClose();
             }}

@@ -26,8 +26,10 @@ import {
   AlignCenter,
   AlignRight,
   Eraser,
+  Youtube,
 } from "lucide-react";
 
+import { toast } from "@/components/admin/toast";
 interface Props {
   editor: Editor | null;
 }
@@ -219,6 +221,24 @@ export default function EditorToolbar({ editor }: Props) {
           <Image size={18} />
         </button>
 
+        {/* YouTube */}
+        <button
+          type="button"
+          title="YouTube video"
+          onClick={() => {
+            const url = window.prompt("Paste a YouTube link");
+
+            if (!url) return;
+
+            if (!editor.chain().focus().setYoutubeVideo({ src: url }).run()) {
+              toast("That doesn't look like a YouTube link.");
+            }
+          }}
+          className={btn}
+        >
+          <Youtube size={18} />
+        </button>
+
         {/* Clear */}
         <button
           type="button"
@@ -232,12 +252,13 @@ export default function EditorToolbar({ editor }: Props) {
         open={mediaOpen}
         folder="blog"
         onClose={() => setMediaOpen(false)}
-        onSelect={(url) => {
+        onSelect={(url, alt) => {
           editor
             .chain()
             .focus()
             .setImage({
               src: url,
+              alt,
             })
             .run();
         }}

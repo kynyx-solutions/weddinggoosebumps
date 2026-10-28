@@ -3,14 +3,36 @@ import Footer from "@/components/sections/footer";
 import InquiryForm from "./inquire-form";
 import Link from "next/link";
 import Image from "next/image";
-import { Phone, Instagram, Facebook } from "lucide-react";
+import { Phone, Instagram, Facebook, MapPin } from "lucide-react";
+import OrganizationJsonLd from "@/components/seo/organization-json-ld";
+import FaqSection from "@/components/sections/faq-section";
+import {
+  getContactSettings,
+  mapEmbedSrc,
+  mapsLink,
+  whatsappLink,
+  type ContactSettings,
+} from "@/lib/site";
 
 // New banner component
-function ContactInfoBanner() {
+function ContactInfoBanner({
+  whatsappHref,
+  contact,
+}: {
+  whatsappHref: string;
+  contact: ContactSettings;
+}) {
+  // With an address there are four columns: one row on wide screens, two by two on tablets
+  // (four would squeeze the email address), stacked on phones
+  const withAddress = Boolean(contact.contactAddress);
+
   return (
     <section className="w-full bg-[#f7f5f2] py-12">
-      <div className="mx-auto max-w-6xl px-4">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-12">
+      <div className={`mx-auto px-4 ${withAddress ? "max-w-7xl" : "max-w-6xl"}`}>
+        <div
+          className={`grid grid-cols-1 gap-8 md:gap-12 ${withAddress ? "md:grid-cols-2 xl:grid-cols-4 xl:gap-8" : "md:grid-cols-3"
+            }`}
+        >
           {/* Customer Support - Phone */}
           <div className="flex flex-col items-center text-center">
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#C2A770]">
@@ -71,9 +93,9 @@ function ContactInfoBanner() {
             <h4 className="font-epicene-display text-charcoal mb-3 text-lg tracking-wide uppercase">
               Find Us On
             </h4>
-            <div className="mt-2 flex items-center justify-center gap-4">
+            <div className="mt-3 flex items-center justify-center gap-4">
               <a
-                href="https://wa.me/"
+                href={whatsappHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="WhatsApp"
@@ -114,11 +136,69 @@ function ContactInfoBanner() {
               </a>
             </div>
           </div>
+
+          {withAddress && <VisitUsColumn contact={contact} />}
         </div>
       </div>
     </section>
   );
 }
+
+// Fourth column of the contact row, same look as the other three; the address comes from
+// Admin → Site Settings
+function VisitUsColumn({ contact }: { contact: ContactSettings }) {
+  // Shaped like its neighbours: the street as the small grey line (where they show "Phone
+  // number:"), then one gold line with the city and PIN. A one-line address keeps "Our studio:".
+  const lines = (contact.contactAddress ?? "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const detail = lines.length > 1 ? lines.slice(0, -1).join(", ") : "Our studio:";
+  const main = lines[lines.length - 1];
+
+  return (
+    <div className="flex flex-col items-center text-center">
+      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#C2A770]">
+        <MapPin className="h-6 w-6 text-[#C2A770]" />
+      </div>
+      <h4 className="font-epicene-display text-charcoal mb-3 text-lg tracking-wide uppercase">
+        Visit Us
+      </h4>
+      <address className="flex flex-col items-center not-italic">
+        <p className="text-charcoal/70 font-lora mb-2 text-sm">{detail}</p>
+        {/* Same style as the phone number and email; opens the studio on Google Maps */}
+        <a
+          href={mapsLink(contact)}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Get directions on Google Maps"
+          className="font-lora text-lg text-[#C2A770] hover:underline"
+        >
+          {main}
+        </a>
+      </address>
+    </div>
+  );
+}
+
+// Optional map under the contact row (Site Settings → Show a map)
+// function VisitUsMap({ contact }: { contact: ContactSettings }) {
+//   if (!contact.contactAddress || !contact.showMap) return null;
+
+//   return (
+//     <section className="w-full bg-[#f7f5f2] pb-12">
+//       <div className="mx-auto aspect-[4/3] w-full max-w-4xl overflow-hidden border border-[#e8e1d8] px-0 sm:aspect-[16/7]">
+//         <iframe
+//           title="Wedding Goosebumps on Google Maps"
+//           src={mapEmbedSrc(contact)}
+//           className="h-full w-full grayscale-35"
+//           loading="lazy"
+//           referrerPolicy="no-referrer-when-downgrade"
+//         />
+//       </div>
+//     </section>
+//   );
+// }
 
 function WeddingGoosebumpsSection() {
   return (
@@ -153,9 +233,12 @@ function WeddingGoosebumpsSection() {
   );
 }
 
-export default function InquirePage() {
+export default async function InquirePage() {
+  const contact = await getContactSettings();
+
   return (
     <main className="min-h-screen">
+      <OrganizationJsonLd />
       <Navigation />
 
       <div className="flex min-h-screen">
@@ -190,7 +273,12 @@ export default function InquirePage() {
         </div>
       </div>
       {/* Contact Info Banner placed after inquiry form and before Contact Us banner */}
-      <ContactInfoBanner />
+      <ContactInfoBanner
+        whatsappHref={whatsappLink(contact.whatsappNumber, contact.whatsappMessage)}
+        contact={contact}
+      />
+      {/* <VisitUsMap contact={contact} /> */}
+      <FaqSection page="Inquire" />
       <WeddingGoosebumpsSection />
 
       <Footer />

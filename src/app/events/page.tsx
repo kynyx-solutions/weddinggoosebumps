@@ -1,7 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import prisma from "@/lib/prisma";
+import { getLivePosts } from "@/lib/posts";
 import Navigation from "@/components/sections/navigation";
 import Footer from "@/components/sections/footer";
 import ServiceLevelSection from "@/components/sections/service-level";
@@ -26,24 +26,7 @@ interface EventItem {
 
 export default async function EventsPage() {
   // Same list as the EVENTS dropdown in the navbar
-  const events: EventItem[] = (await prisma.blogPost.findMany({
-    where: { status: "PUBLISHED" },
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      title: true,
-      slug: true,
-      excerpt: true,
-      coverImage: true,
-      publishDate: true,
-      createdAt: true,
-      sections: {
-        where: { section: "hero" },
-        select: { content: true },
-        take: 1,
-      },
-    },
-  })) as unknown as EventItem[];
+  const events: EventItem[] = await getLivePosts();
 
   const eventHref = (slug: string) => `/events/${slug.startsWith("/") ? slug.substring(1) : slug}`;
   const latestEvent = events[0]

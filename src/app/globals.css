@@ -223,6 +223,14 @@
   border-radius: 8px;
 }
 
+/* YouTube embeds keep to the editor's width */
+.ProseMirror iframe {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
 
 
 /* loader css*/
@@ -262,3 +270,79 @@
 
 /* END editor css*/
 
+
+/* Post "Story" (admin editor's Story tab) on the event and journal pages */
+.post-story {
+  font-family: var(--font-lora);
+  color: rgb(30 30 30 / 0.85);
+  font-size: 15px;
+  line-height: 1.85;
+}
+@media (min-width: 640px) {
+  .post-story { font-size: 16px; }
+}
+.post-story > :first-child { margin-top: 0; }
+.post-story p {
+  font-family: var(--font-lora);
+  margin: 0 0 1.4em;
+}
+.post-story h1,
+.post-story h2,
+.post-story h3 {
+  color: var(--color-charcoal);
+  text-transform: uppercase;
+  line-height: 1.15;
+  margin: 2em 0 0.7em;
+}
+.post-story h1 { font-size: clamp(28px, 4vw, 42px); }
+.post-story h2 { font-size: clamp(24px, 3.4vw, 36px); }
+.post-story h3 { font-size: clamp(20px, 2.6vw, 28px); }
+.post-story a {
+  color: var(--color-gold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.post-story strong { font-weight: 600; color: var(--color-charcoal); }
+.post-story ul,
+.post-story ol {
+  padding-left: 1.4em;
+  margin: 0 0 1.4em;
+}
+.post-story ul { list-style: disc; }
+.post-story ol { list-style: decimal; }
+.post-story li p { margin: 0 0 0.4em; }
+.post-story blockquote {
+  margin: 2.2em 0;
+  padding-left: 1.4em;
+  border-left: 2px solid var(--color-gold);
+  font-style: italic;
+  color: var(--color-charcoal);
+}
+.post-story img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 2.5em 0;
+}
+.post-story hr {
+  width: 3.5rem;
+  height: 2px;
+  margin: 3em auto;
+  border: 0;
+  background: #D9D5CF;
+}
+.post-story div[data-youtube-video] { margin: 2.5em 0; }
+.post-story iframe {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  border: 0;
+}
+.post-story pre {
+  margin: 0 0 1.4em;
+  padding: 1em;
+  overflow-x: auto;
+  background: #efe9df;
+  font-size: 0.85em;
+}

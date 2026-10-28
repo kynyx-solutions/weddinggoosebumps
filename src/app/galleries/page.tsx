@@ -4,6 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import Navigation from "@/components/sections/navigation";
 import Footer from "@/components/sections/footer";
+import InstagramTiles from "@/components/sections/instagram-tiles";
+import { getGalleryCards } from "@/lib/galleries";
+import { GALLERY_CARDS } from "./gallery-cards";
 
 const HERO = {
   src: "/about-page/slide1/1.jpg", // keep as-is (add extension if needed)
@@ -12,58 +15,9 @@ const HERO = {
   alt: "Elegant outdoor table setting",
 };
 
-export default function GalleriesPage() {
-  // Prepare gallery card data as an array
-  const galleryCards = [
-    {
-      image: "/galleries-page/headers/Tanya.jpg",
-      heading: "Crafted with love ",
-      subheading: "Tanya and Aayush",
-      slug: "1",
-    },
-    {
-      image: "/galleries-page/headers/Tatsav.jpg",
-      heading: "Timeless modern traditions",
-      subheading: "Tatsav & Vidhi",
-      slug: "2",
-    },
-    {
-      image: "/galleries-page/headers/ashish.jpg",
-      heading: "Ethereal floral elegance",
-      subheading: "Ashish and Juhi",
-      slug: "3",
-    },
-    {
-      image: "/galleries-page/headers/mohit.jpg",
-      heading: "Culture meets joy",
-      subheading: "Mohit & Hitika",
-      slug: "5",
-    },
-    {
-      image: "/galleries-page/headers/dharam.jpg",
-      heading: "A majestic romance",
-      subheading: "Harshil & Akanksha",
-      slug: "6",
-    },
-    {
-      image: "/galleries-page/headers/saval.jpg",
-      heading: "Royal timeless luxury",
-      subheading: "Dharam & Rajivi ",
-      slug: "7",
-    },
-    {
-      image: "/galleries-page/headers/mukesh.jpg",
-      heading: "Love through laughter",
-      subheading: "Saval & Romil ",
-      slug: "8",
-    },
-    {
-      image: "/galleries-page/headers/riya.jpg",
-      heading: "Heritage in elegance",
-      subheading: "Mukesh and Yamini",
-      slug: "10",
-    },
-  ];
+export default async function GalleriesPage() {
+  // Albums managed in the admin panel once imported, otherwise the built-in ones
+  const galleryCards = (await getGalleryCards()) ?? GALLERY_CARDS;
 
   return (
     <main className="bg-ivory text-charcoal">
@@ -251,6 +205,7 @@ export default function GalleriesPage() {
         <div className="absolute inset-0 bg-black/20" />
       </section>
 
+      <InstagramTiles />
       <Footer />
     </main>
   );

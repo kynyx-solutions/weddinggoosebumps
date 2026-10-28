@@ -21,6 +21,9 @@ model User {
   image         String?
   password      String?
   role          String    @default("Viewer") // Super Admin, Editor, Marketing, Viewer
+  // Five wrong passwords in a row lock the account for 15 minutes
+  failedLogins  Int       @default(0)
+  lockedUntil   DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   accounts      Account[]
@@ -105,6 +108,7 @@ model BlogPost {
   slug            String    @unique
   authorId        String?
   coverImage      String?
+  coverAlt        String?
   excerpt         String?   @db.Text        // Increased to TEXT
   body            String?   @db.LongText    // Increased to LONGTEXT for large blog content
   status          String    @default("Draft") // Draft, Scheduled, Published
@@ -126,6 +130,15 @@ model BlogPost {
   categories      PostCategory[]
   tags            PostTag[]
   sections BlogSection[]
+
+  // Where the celebration took place; links the post to its destination page
+  destinationId   String?
+  destination     Destination? @relation(fields: [destinationId], references: [id], onDelete: SetNull)
+  // Set when moved to the trash; emptied for good after 30 days
+  deletedAt       DateTime?
+  revisions       PostRevision[]
+
+  @@index([destinationId])
 }
 
 model BlogSection {
@@ -200,6 +213,7 @@ model Lead {
   status      String   @default("New") // New, Contacted, Qualified, Closed, Spam
   assignedTo  String?
   notes       String?  @db.Text
+  followUpAt  DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -214,7 +228,16 @@ model GlobalSettings {
   gtmId              String?
   metaPixelId        String?
   linkedinInsightTag String?
-  robotsTxt          String?
+  robotsTxt          String?  @db.Text
+
+  // Contact page and the floating WhatsApp button
+  whatsappNumber       String?
+  whatsappMessage      String?  @db.Text
+  whatsappEventMessage String?  @db.Text
+  contactAddress       String?  @db.Text
+  mapUrl               String?  @db.Text
+  showMap              Boolean  @default(true)
+
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }
@@ -226,4 +249,101 @@ model Redirect {
   permanent   Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// One row per click on the floating WhatsApp button; chats never reach the Leads inbox
+model WhatsAppClick {
+  id        String   @id @default(cuid())
+  page      String?  @db.VarChar(512)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// Short admin-managed lists shown on the public site (stats, FAQs, Instagram tiles, saved
+// authors). `kind` picks the list; `data` holds that kind's fields (see src/lib/content-kinds.ts)
+model ContentItem {
+  id        String   @id @default(cuid())
+  kind      String
+  data      Json
+  sortOrder Int      @default(0)
+  isHidden  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([kind, sortOrder])
+}
+
+// A saved version of a post (fields + sections), kept on every manual save so edits can be undone
+model PostRevision {
+  id        String   @id @default(cuid())
+  postId    String
+  snapshot  Json
+  label     String?
+  userId    String?
+  createdAt DateTime @default(now())
+
+  post BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
+}
+
+// Destination guide pages (/destinations/<slug>)
+model Destination {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  name            String
+  region          String?
+  tagline         String?
+  heroImage       String?
+  intro           String?  @db.Text
+  bestSeason      String?
+  highlights      String?  @db.Text // one per line
+  venues          String?  @db.Text // one per line
+  metaTitle       String?
+  metaDescription String?  @db.Text
+  sortOrder       Int      @default(0)
+  isHidden        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  posts BlogPost[]
+}
+
+// Albums on the Galleries page; until any exist the page uses the built-in albums
+model Gallery {
+  id         String   @id @default(cuid())
+  slug       String   @unique
+  heading    String
+  subheading String?
+  coverImage String
+  sortOrder  Int      @default(0)
+  isHidden   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  photos GalleryPhoto[]
+}
+
+model GalleryPhoto {
+  id        String  @id @default(cuid())
+  galleryId String
+  src       String  @db.VarChar(512)
+  width     Int
+  height    Int
+  alt       String?
+  sortOrder Int     @default(0)
+
+  gallery Gallery @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+
+  @@index([galleryId, sortOrder])
+}
+
+// Description (alt text) for an image in the media library, keyed by its address
+model MediaAsset {
+  id        String   @id @default(cuid())
+  url       String   @unique @db.VarChar(512)
+  alt       String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

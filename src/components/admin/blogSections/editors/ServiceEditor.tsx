@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import MediaLibrary from "@/components/media/MediaLibrary";
+import { saveBlogSection, useSectionSave } from "@/components/admin/post-save";
 
+import { toast } from "@/components/admin/toast";
 interface ServiceEditorProps {
   blogId: string;
 }
@@ -20,6 +22,12 @@ export default function ServiceEditor({ blogId }: ServiceEditorProps) {
   });
 
   const [openMedia, setOpenMedia] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  const save = useSectionSave("service", service, loaded, (content, autosave) =>
+    saveBlogSection(blogId, "service", content, autosave)
+  );
+
   useEffect(() => {
     const loadService = async () => {
       try {
@@ -36,6 +44,8 @@ export default function ServiceEditor({ blogId }: ServiceEditorProps) {
         }
       } catch (err) {
         console.error(err);
+      } finally {
+        setLoaded(true);
       }
     };
 
@@ -46,28 +56,12 @@ export default function ServiceEditor({ blogId }: ServiceEditorProps) {
     try {
       setIsSaving(true);
 
-      const res = await fetch("/api/blog-sections", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          blogId,
-          section: "service",
-          content: service,
-        }),
-      });
+      const data = await save({ force: true });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message);
-      }
-
-      alert(data.message);
+      toast(data?.message ?? "Section saved");
     } catch (error) {
       console.error(error);
-      alert("Failed to save service section.");
+      toast("Failed to save service section.");
     } finally {
       setIsSaving(false);
     }

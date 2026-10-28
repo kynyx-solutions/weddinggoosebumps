@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+import { toast } from "@/components/admin/toast";
 export default function NewPage() {
   const router = useRouter();
   const [title, setTitle] = useState("");
@@ -30,7 +31,7 @@ export default function NewPage() {
       router.push(`/admin/pages/${page.id}`);
     } catch (error) {
       console.error(error);
-      alert("Error creating page");
+      toast("Error creating page");
       setIsLoading(false);
     }
   };

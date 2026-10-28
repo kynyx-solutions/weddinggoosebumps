@@ -6,7 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import MediaLibrary from "@/components/media/MediaLibrary";
+import { saveBlogSection, useSectionSave } from "@/components/admin/post-save";
 
+import { toast } from "@/components/admin/toast";
 interface BlogJournalEditorProps {
   blogId: string;
 }
@@ -25,6 +27,15 @@ export default function BlogJournalEditor({ blogId }: BlogJournalEditorProps) {
   const [openAuthorMedia, setOpenAuthorMedia] = useState(false);
 
   const [loading, setLoading] = useState(true);
+  // Profiles saved under Site Content → Authors
+  const [savedAuthors, setSavedAuthors] = useState<{ id: string; data: Record<string, string> }[]>([]);
+
+  useEffect(() => {
+    fetch("/api/content?kind=author")
+      .then((res) => (res.ok ? res.json() : []))
+      .then(setSavedAuthors)
+      .catch(() => {});
+  }, []);
   const [saving, setSaving] = useState(false);
 
  useEffect(() => {
@@ -58,38 +69,23 @@ export default function BlogJournalEditor({ blogId }: BlogJournalEditorProps) {
    loadJournal();
  }, [blogId]);
 
+ const save = useSectionSave(
+   "journal",
+   { heading, paragraph, authorName, authorRole, authorImage },
+   !loading,
+   (content, autosave) => saveBlogSection(blogId, "journal", content, autosave)
+ );
+
  async function handleSave() {
    try {
      setSaving(true);
 
-     const res = await fetch("/api/blog-sections", {
-       method: "POST",
-       headers: {
-         "Content-Type": "application/json",
-       },
-       body: JSON.stringify({
-         blogId,
-         section: "journal",
-         content: {
-           heading,
-           paragraph,
-           authorName,
-           authorRole,
-           authorImage,
-         },
-       }),
-     });
+     const data = await save({ force: true });
 
-     const data = await res.json();
-
-     if (!res.ok) {
-       throw new Error(data.message);
-     }
-
-     alert(data.message);
+     toast(data?.message ?? "Section saved");
    } catch (error) {
      console.error(error);
-     alert("Failed to save Journal section.");
+     toast("Failed to save Journal section.");
    } finally {
      setSaving(false);
    }
@@ -123,6 +119,27 @@ export default function BlogJournalEditor({ blogId }: BlogJournalEditorProps) {
           </div>
 
           <div className="space-y-2">
+            {savedAuthors.length > 0 && (
+              <select
+                aria-label="Use a saved author"
+                className="mb-3 flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
+                value=""
+                onChange={(e) => {
+                  const author = savedAuthors.find((a) => a.id === e.target.value)?.data;
+                  if (!author) return;
+                  setAuthorName(author.name);
+                  setAuthorRole(author.role || "");
+                  if (author.photo) setAuthorImage(author.photo);
+                }}
+              >
+                <option value="">Use a saved author…</option>
+                {savedAuthors.map((author) => (
+                  <option key={author.id} value={author.id}>
+                    {author.data.name}
+                  </option>
+                ))}
+              </select>
+            )}
             <Label>Author Name</Label>
             <Input value={authorName} onChange={(e) => setAuthorName(e.target.value)} />
           </div>

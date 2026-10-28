@@ -1,5 +1,15 @@
 import { Metadata } from "next";
+import { unstable_cache } from "next/cache";
 import prisma from "@/lib/prisma";
+
+export const PAGES_TAG = "pages";
+
+// Every public page reads its SEO row on each request; cached until a page is saved in admin
+export const getSeoPage = unstable_cache(
+  (slug: string) => prisma.page.findUnique({ where: { slug } }),
+  ["seo-page"],
+  { tags: [PAGES_TAG] }
+);
 
 // Apne hisab se default values ko change kar lena
 const DEFAULT_SEO = {
@@ -9,9 +19,7 @@ const DEFAULT_SEO = {
 };
 
 export async function getPageMetadata(slug: string): Promise<Metadata> {
-  const page = await prisma.page.findUnique({
-    where: { slug }
-  });
+  const page = await getSeoPage(slug);
 
   // Agar page hi nahi mila, toh pure website ka default SEO return kar do
   if (!page) {

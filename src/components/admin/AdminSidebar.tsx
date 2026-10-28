@@ -13,7 +13,16 @@ import {
   Loader2,
   ChevronDown,
   ChevronRight,
+  SlidersHorizontal,
+  LayoutGrid,
+  ArrowRightLeft,
+  History,
+  UserCog,
+  CircleUser,
 } from "lucide-react";
+import { can, canSeeLeads } from "@/lib/permissions";
+
+type Visible = (role: string) => boolean;
 
 const menuItems = [
   {
@@ -38,34 +47,78 @@ const menuItems = [
         title: "Add New",
         href: "/admin/blog/new",
       },
-      // {
-      //   title: "Categories",
-      //   href: "/admin/blog/categories",
-      // },
+      {
+        title: "Categories & Tags",
+        href: "/admin/blog/categories",
+      },
     ],
   },
   {
     title: "Leads",
     href: "/admin/leads",
     icon: Users,
+    visible: canSeeLeads as Visible,
+  },
+  {
+    title: "Site Content",
+    icon: LayoutGrid,
+    children: [
+      { title: "Stats", href: "/admin/content/stat" },
+      { title: "FAQs", href: "/admin/content/faq" },
+      { title: "Instagram Tiles", href: "/admin/content/instagram" },
+      { title: "Destinations", href: "/admin/destinations" },
+      { title: "Galleries", href: "/admin/galleries" },
+      { title: "Authors", href: "/admin/content/author" },
+    ],
   },
   {
     title: "SEO",
     href: "/admin/seo",
     icon: Settings,
   },
+  {
+    title: "Redirects",
+    href: "/admin/redirects",
+    icon: ArrowRightLeft,
+  },
+  {
+    title: "Site Settings",
+    href: "/admin/settings",
+    icon: SlidersHorizontal,
+  },
+  {
+    title: "Activity Log",
+    href: "/admin/logs",
+    icon: History,
+  },
+  {
+    title: "Users",
+    href: "/admin/users",
+    icon: UserCog,
+    visible: ((role: string) => can(role, "users")) as Visible,
+  },
+  {
+    title: "My Account",
+    href: "/admin/account",
+    icon: CircleUser,
+  },
 ];
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ role }: { role: string }) {
   const pathname = usePathname();
   const router = useRouter();
 
   const [loadingHref, setLoadingHref] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  const [openMenus, setOpenMenus] = useState({
-    Blog: pathname.startsWith("/admin/blog"),
-  });
+  // A group starts open when one of its pages is showing
+  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(
+      menuItems
+        .filter((item) => item.children)
+        .map((item) => [item.title, item.children!.some((child) => pathname.startsWith(child.href))])
+    )
+  );
 
   const navigate = (href: string) => {
     if (pathname === href) return;
@@ -84,14 +137,16 @@ export default function AdminSidebar() {
       </div>
 
       <nav className="mt-6 space-y-2 px-4">
-        {menuItems.map((item) => {
+        {menuItems
+          .filter((item) => !("visible" in item) || !item.visible || item.visible(role))
+          .map((item) => {
           const Icon = item.icon;
 
           // ==========================
           // Dropdown Menu
           // ==========================
           if (item.children) {
-            const isOpen = openMenus[item.title as keyof typeof openMenus];
+            const isOpen = openMenus[item.title] ?? false;
 
             return (
               <div key={item.title}>
@@ -192,7 +247,9 @@ export default function AdminSidebar() {
         })}
       </nav>
 
-      <div className="absolute bottom-0 w-64 p-4">
+      {/* Bottom of the sidebar, or after the menu when the screen is short */}
+      <div className="mt-auto p-4">
+        <p className="px-4 pb-2 text-xs text-gray-400">Signed in as {role}</p>
         <Link
           href="/api/auth/signout"
           className="flex items-center rounded-md px-4 py-2 text-red-600 hover:bg-red-50"

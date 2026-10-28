@@ -5,12 +5,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Ellipsis, Menu, X } from "lucide-react";
+import WhatsAppButton from "./whatsapp-button";
 
 interface NavigationClientProps {
   eventLinks: {
     title: string;
     slug: string;
   }[];
+  whatsappHref: string;
 }
 
 const navLinks = [
@@ -25,7 +27,7 @@ const navLinks = [
 
 const LOGO_URL = "/logo/Logo.png";
 
-export default function NavigationClient({ eventLinks }: NavigationClientProps) {
+export default function NavigationClient({ eventLinks, whatsappHref }: NavigationClientProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isHeroMenuOpen, setIsHeroMenuOpen] = useState(false);
@@ -365,6 +367,8 @@ export default function NavigationClient({ eventLinks }: NavigationClientProps) 
           </ul>
         </nav>
       </div>
+
+      <WhatsAppButton href={whatsappHref} hidden={isMenuOpen} />
     </>
   );
 }

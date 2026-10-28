@@ -11,6 +11,8 @@ import JournalSection from "@/components/sections/journal";
 import Footer from "@/components/sections/footer";
 import { getPageMetadata } from "@/lib/seo";
 import SeoScripts from "@/components/seo-scripts";
+import OrganizationJsonLd from "@/components/seo/organization-json-ld";
+import DestinationsRow from "@/components/sections/destinations-row";
 
 export const dynamic = "force-dynamic";
 
@@ -25,10 +27,12 @@ export default function Home() {
   return (
     <main>
       <SeoScripts slug="/" />
+      <OrganizationJsonLd />
       <Navigation />
       <HeroVideo />
       <GallerySection />
       <OfferingsSection />
+      <DestinationsRow />
       <ScrollVideo1 />
       <ImageSection2025 />
       <ServiceLevelSection />

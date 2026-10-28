@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+import { toast } from "@/components/admin/toast";
 export default function SeoSettings() {
   const [settings, setSettings] = useState<any>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -32,10 +33,10 @@ export default function SeoSettings() {
       });
 
       if (!res.ok) throw new Error("Failed to save");
-      alert("SEO Settings saved successfully!");
+      toast("SEO Settings saved successfully!");
     } catch (error) {
       console.error(error);
-      alert("Error saving SEO settings");
+      toast("Error saving SEO settings");
     } finally {
       setIsSaving(false);
     }
@@ -110,6 +111,24 @@ export default function SeoSettings() {
                 onChange={(e) => setSettings({ ...settings, metaPixelId: e.target.value })}
               />
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>robots.txt</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <textarea
+              className="flex min-h-[160px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 font-mono text-sm focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:outline-none"
+              value={settings.robotsTxt || ""}
+              placeholder={"Leave empty for the standard rules:\nUser-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nDisallow: /login\n\nSitemap: https://weddinggoosebumps.com/sitemap.xml"}
+              onChange={(e) => setSettings({ ...settings, robotsTxt: e.target.value })}
+            />
+            <p className="text-xs text-gray-500">
+              Applies on weddinggoosebumps.com only. Copies such as the beta site always tell
+              search engines to stay out.
+            </p>
           </CardContent>
         </Card>
 

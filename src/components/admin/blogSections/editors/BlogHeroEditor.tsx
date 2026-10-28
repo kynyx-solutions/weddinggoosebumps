@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { saveBlogSection, useSectionSave } from "@/components/admin/post-save";
 
+import { toast } from "@/components/admin/toast";
 interface BlogHeroEditorProps {
   blogId: string;
   initialTitle: string;
@@ -14,6 +16,18 @@ interface BlogHeroEditorProps {
 
 export default function BlogHeroEditor({ blogId, initialTitle }: BlogHeroEditorProps) {
   const [isSaving, setIsSaving] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [hero, setHero] = useState({
+    category: initialTitle,
+    heroImage: "",
+  });
+
+  const save = useSectionSave("hero", hero, loaded, (content, autosave) =>
+    saveBlogSection(blogId, "hero", content, autosave)
+  );
+
+  // Loaded once per post: re-running on every keystroke in the title field used to overwrite
+  // unsaved edits here
   useEffect(() => {
     const loadHero = async () => {
       try {
@@ -29,46 +43,29 @@ export default function BlogHeroEditor({ blogId, initialTitle }: BlogHeroEditorP
         }
       } catch (err) {
         console.error(err);
+      } finally {
+        setLoaded(true);
       }
     };
 
     loadHero();
-  }, [blogId, initialTitle]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [blogId]);
 
   const saveHero = async () => {
     try {
       setIsSaving(true);
 
-      const res = await fetch("/api/blog-sections", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          blogId,
-          section: "hero",
-          content: hero,
-        }),
-      });
+      const data = await save({ force: true });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message);
-      }
-
-      alert(data.message);
+      toast(data?.message ?? "Section saved");
     } catch (error) {
       console.error(error);
-      alert("Failed to save hero section.");
+      toast("Failed to save hero section.");
     } finally {
       setIsSaving(false);
     }
   };
-  const [hero, setHero] = useState({
-    category: initialTitle,
-    heroImage: "",
-  });
 
   const [openMedia, setOpenMedia] = useState(false);
 

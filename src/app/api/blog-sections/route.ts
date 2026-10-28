@@ -1,20 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { authorize } from "@/lib/auth";
+import { logActivity } from "@/lib/activity";
+import { POSTS_TAG } from "@/lib/posts";
+import { refreshPublicPages } from "@/lib/site";
+
+// Saving a section of a live post refreshes the public pages; drafts aren't public yet
+async function afterSave(userId: string | undefined, blogId: string, section: string, autosave: boolean) {
+  const post = await prisma.blogPost.findUnique({
+    where: { id: blogId },
+    select: { title: true, status: true },
+  });
+  if (post && post.status.toLowerCase() !== "draft") refreshPublicPages(POSTS_TAG);
+  if (post && !autosave) {
+    await logActivity(userId, `Updated ${section} section of "${post.title}"`, "Blog", { postId: blogId });
+  }
+}
 export async function POST(req: NextRequest) {
     try {
-      const session = await auth();
-
-      if (!session?.user) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: "Unauthorized",
-          },
-          { status: 401 }
-        );
-      }
+      const access = await authorize("content");
+      if ("denied" in access) return access.denied;
+      const { session } = access;
     const { blogId, section, content } = await req.json();
+    const autosave = new URL(req.url).searchParams.get("autosave") === "1";
 
     if (!blogId || !section) {
       return NextResponse.json(
@@ -42,6 +50,7 @@ export async function POST(req: NextRequest) {
           content,
         },
       });
+      await afterSave(session.user.id, blogId, section, autosave);
 
       return NextResponse.json({
         success: true,
@@ -57,6 +66,7 @@ export async function POST(req: NextRequest) {
         content,
       },
     });
+    await afterSave(session.user.id, blogId, section, autosave);
 
     return NextResponse.json({
       success: true,
@@ -80,6 +90,10 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
+    // Only the admin editor reads sections here; drafts must not be readable by visitors
+    const access = await authorize(null);
+    if ("denied" in access) return access.denied;
+
     const { searchParams } = new URL(req.url);
 
     const blogId = searchParams.get("blogId");

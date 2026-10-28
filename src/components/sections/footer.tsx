@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Phone, Instagram, Facebook } from 'lucide-react';
+import { Phone, Instagram, Facebook, MapPin } from 'lucide-react';
+import { getContactSettings, mapsLink } from '@/lib/site';
 
 // Footer gallery images
 const footerImages = [
@@ -19,7 +20,9 @@ const navLinks = [
   { name: 'Inquire', href: '/inquire' },
 ];
 
-export default function Footer() {
+export default async function Footer() {
+  const contact = await getContactSettings();
+
   return (
     <footer className="bg-ivory text-charcoal font-lora">
       <div className="container mx-auto px-4 sm:px-6 md:px-10 pt-2 sm:pt-4 md:pt-6 pb-6 sm:pb-8 text-center">
@@ -73,6 +76,21 @@ export default function Footer() {
             Inquire to begin your experience
           </Link>
         </div>
+
+        {/* Studio address from Admin → Site Settings; opens Google Maps */}
+        {contact.contactAddress && (
+          <div className="mt-8 sm:mt-10">
+            <a
+              href={mapsLink(contact)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group inline-flex items-center justify-center gap-2 text-[10px] sm:text-[11px] md:text-xs uppercase tracking-[0.2em] text-charcoal/80 font-light hover:text-gold transition-colors duration-300"
+            >
+              <MapPin className="w-4 h-4 shrink-0 text-gold" />
+              <span>{contact.contactAddress.replace(/\s*\n\s*/g, ', ')}</span>
+            </a>
+          </div>
+        )}
 
         <div className="mt-16 sm:mt-24 md:mt-32 max-w-[1240px] mx-auto">
           {/* Single row with copyright left, icons center, back to top right */}
