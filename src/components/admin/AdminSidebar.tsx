@@ -68,7 +68,6 @@ const menuItems = [
       { title: "Instagram Tiles", href: "/admin/content/instagram" },
       { title: "Destinations", href: "/admin/destinations" },
       { title: "Galleries", href: "/admin/galleries" },
-      { title: "Authors", href: "/admin/content/author" },
     ],
   },
   {

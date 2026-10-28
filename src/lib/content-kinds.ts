@@ -100,22 +100,7 @@ export const CONTENT_KINDS: Record<string, ContentKind> = {
     limit: 12,
     folder: "pages",
   },
-  author: {
-    kind: "author",
-    title: "Authors",
-    singular: "author",
-    description:
-      "Saved author profiles. In a post's Journal tab, pick one to fill in the name, role and photo in one go.",
-    fields: [
-      { key: "name", label: "Name", type: "text", required: true, max: 100 },
-      { key: "role", label: "Role", type: "text", max: 100, placeholder: "Founder & Creative Director" },
-      { key: "photo", label: "Photo", type: "image" },
-      { key: "bio", label: "Short bio", type: "textarea", max: 600 },
-    ],
-    titleField: "name",
-    subtitleField: "role",
-    folder: "team",
-  },
+  // No "author" list: a post's author is set only in its Journal section in the post editor
 };
 
 export type ContentData = Record<string, string>;

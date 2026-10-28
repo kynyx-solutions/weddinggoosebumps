@@ -107,7 +107,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       <BlogKindWords kindWords={kindWords} />
       <PostStory html={finalPost.body} />
       <PostBlocks blocks={sectionContent<{ blocks: Block[] }>(finalPost, "blocks").blocks} />
-      <PostFooter post={finalPost} image={heroData.hero} author={heroData.author} />
+      <PostFooter post={finalPost} image={heroData.hero} />
       <PostRelated post={finalPost} />
       <div className="mx-auto max-w-7xl py-10">
         <div className="h-[5px] rounded-full bg-gradient-to-r from-transparent via-gray-300 to-transparent" />

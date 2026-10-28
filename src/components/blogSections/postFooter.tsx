@@ -1,38 +1,23 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Facebook } from "lucide-react";
 import CopyLinkButton from "./copyLinkButton";
 import { WHATSAPP_ICON_PATH } from "@/lib/whatsapp";
-import { getContent } from "@/lib/content";
 import { canonicalPostUrl, getAdjacentPosts, postPath } from "@/lib/posts";
 import { SITE_URL } from "@/lib/site";
 
 const iconClass = "text-charcoal/70 rounded p-2 transition-colors duration-200 hover:text-[#C2A770]";
 
-interface Author {
-  name: string;
-  role: string;
-  photo: string;
-  bio: string;
-}
-
-// Under a post: share links, "About the author" (when that author has a bio under Site Content →
-// Authors) and the older / newer post
+// Under a post: share links and the older / newer post. (The author is shown in the post's
+// Journal section, the only place it's set.)
 export default async function PostFooter({
   post,
   image,
-  author,
 }: {
   post: { id: string; title: string; slug: string; canonicalUrl: string | null };
   image: string;
-  author: { name: string; role: string; avatar: string };
 }) {
   const url = canonicalPostUrl(post);
-  const [{ older, newer }, { items: authors }] = await Promise.all([
-    getAdjacentPosts(post.id),
-    getContent<Author>("author"),
-  ]);
-  const profile = authors.find((a) => a.name.trim().toLowerCase() === author.name.trim().toLowerCase());
+  const { older, newer } = await getAdjacentPosts(post.id);
   const media = image.startsWith("/") ? `${SITE_URL}${image}` : image;
 
   return (
@@ -77,26 +62,6 @@ export default async function PostFooter({
             <CopyLinkButton url={url} className={iconClass} />
           </div>
         </div>
-
-        {profile?.bio && (
-          <div className="mt-12 flex flex-col items-center gap-5 bg-white px-6 py-10 text-center sm:flex-row sm:items-start sm:px-10 sm:text-left">
-            <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full bg-[#efe9df]">
-              <Image src={profile.photo || author.avatar} alt={profile.name} fill sizes="80px" className="object-cover" />
-            </div>
-            <div>
-              <p className="font-commuter-sans text-gold text-[10px] font-bold tracking-[0.3em] uppercase sm:text-[11px]">
-                About the author
-              </p>
-              <p className="font-cormorant mt-2 text-[20px] font-light uppercase">{profile.name}</p>
-              {profile.role && (
-                <p className="font-commuter-sans text-charcoal/55 text-[10px] tracking-[0.08em] uppercase sm:text-[11px]">
-                  {profile.role}
-                </p>
-              )}
-              <p className="font-lora text-charcoal/80 mt-3 mb-0 text-[14px] leading-[1.8] sm:text-[15px]">{profile.bio}</p>
-            </div>
-          </div>
-        )}
 
         {(older || newer) && (
           <nav className="mt-12 grid grid-cols-2 gap-6" aria-label="More posts">

@@ -264,9 +264,12 @@ export default function NavigationClient({ eventLinks, whatsappHref }: Navigatio
                     </svg>
                   </button>
 
-                  <div className="invisible absolute top-full left-1/2 z-50 mt-6 w-72 -translate-x-1/2 rounded-md border border-[#e8e1d8] bg-white opacity-0 shadow-[0_12px_40px_rgba(0,0,0,0.08)] transition-all duration-300 group-hover:visible group-hover:opacity-100">
-                    {/* Event Links */}
-                    <div className="py-3">
+                  {/* Lined up with the right edge of EVENTS (the last item), so the panel never runs
+                      off the side of the screen */}
+                  <div className="invisible absolute top-full right-0 z-50 mt-6 w-72 rounded-md border border-[#e8e1d8] bg-white opacity-0 shadow-[0_12px_40px_rgba(0,0,0,0.08)] transition-all duration-300 group-hover:visible group-hover:opacity-100">
+                    {/* Event Links: scroll once there are more than fit below the header, so every
+                        event and "View All Events" stay reachable */}
+                    <div className="max-h-[calc(100vh-13rem)] overflow-y-auto overscroll-contain py-3">
                       {eventLinks.map((item) => (
                         <Link
                           key={item.slug}
@@ -313,8 +316,10 @@ export default function NavigationClient({ eventLinks, whatsappHref }: Navigatio
           isMenuOpen ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       >
-        <nav className="flex h-full flex-col items-center justify-center pt-[72px] sm:pt-[80px] md:pt-[88px]">
-          <ul className="flex flex-col items-center gap-y-6 sm:gap-y-8">
+        {/* Scrolls when the open Events list is taller than the screen; my-auto keeps the links
+            centred while they fit (justify-center would push the top ones out of reach) */}
+        <nav className="flex h-full flex-col items-center overflow-y-auto overscroll-contain pt-[72px] pb-12 sm:pt-[80px] md:pt-[88px]">
+          <ul className="my-auto flex flex-col items-center gap-y-6 sm:gap-y-8">
             {navLinks.map((link) => (
               <li key={`${link.name}-mobile`}>
                 <Link
