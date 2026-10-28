@@ -3,7 +3,8 @@ import prisma from "@/lib/prisma";
 import { authorize } from "@/lib/auth";
 import { logActivity } from "@/lib/activity";
 
-// The settings this screen owns; contact details are saved from Site Settings instead
+// The settings this screen owns; contact details are saved from Site Settings instead.
+// robots.txt isn't editable in the admin panel: /robots.txt always serves the standard rules.
 const SEO_FIELDS = [
   "defaultMetaTitle",
   "defaultMetaKeywords",
@@ -13,7 +14,6 @@ const SEO_FIELDS = [
   "gtmId",
   "metaPixelId",
   "linkedinInsightTag",
-  "robotsTxt",
 ] as const;
 
 export async function GET() {

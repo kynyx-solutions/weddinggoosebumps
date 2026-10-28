@@ -1,4 +1,3 @@
-import prisma from "@/lib/prisma";
 import { DEFAULT_ROBOTS_TXT } from "@/lib/site";
 
 // Copies on any other host (beta.weddinggoosebumps.com, *.vercel.app previews, localhost) ask
@@ -14,6 +13,7 @@ function text(body: string) {
   });
 }
 
+// Always the standard rules: robots.txt isn't edited from the admin panel
 export async function GET(req: Request) {
   const host = (req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "")
     .split(",")[0]
@@ -21,19 +21,5 @@ export async function GET(req: Request) {
     .trim()
     .toLowerCase();
 
-  if (!PRIMARY_HOSTS.includes(host)) {
-    return text("User-agent: *\nDisallow: /\n");
-  }
-
-  try {
-    const settings = await prisma.globalSettings.findUnique({
-      where: { id: "global" },
-      select: { robotsTxt: true },
-    });
-    const custom = settings?.robotsTxt?.trim();
-    return text(custom ? `${custom}\n` : DEFAULT_ROBOTS_TXT);
-  } catch (error) {
-    console.error("[ROBOTS_TXT]", error);
-    return text(DEFAULT_ROBOTS_TXT);
-  }
+  return text(PRIMARY_HOSTS.includes(host) ? DEFAULT_ROBOTS_TXT : "User-agent: *\nDisallow: /\n");
 }

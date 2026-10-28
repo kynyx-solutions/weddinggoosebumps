@@ -233,33 +233,32 @@
 
 
 
-/* loader css*/
-@keyframes fade {
-
-  0%{
-    opacity:0;
-    transform:scale(.92);
-  }
-
-  15%{
-    opacity:1;
-    transform:scale(1);
-  }
-
-  85%{
-    opacity:1;
-    transform:scale(1);
-  }
-
-  100%{
-    opacity:0;
-    transform:scale(1.05);
-  }
-
+/* loader css: the three slides take turns, 0.9 s each (fade in, hold, fade out), over a 2.7 s
+   loop. Pure CSS, so they also cycle while a page is still arriving from the server, before
+   React starts. Each slide's turn is set by its animation-delay in components/Loader.tsx */
+@keyframes loader-cycle {
+  0% { opacity: 0; transform: scale(.92); }
+  5% { opacity: 1; transform: scale(1); }
+  28.33% { opacity: 1; transform: scale(1); }
+  33.33% { opacity: 0; transform: scale(1.05); }
+  100% { opacity: 0; transform: scale(1.05); }
 }
 
-.animate-fade{
-  animation:fade .9s linear;
+.loader-slide{
+  animation: loader-cycle 2.7s linear infinite both;
+}
+
+/* opening logo screen (components/SplashScreen.tsx): fades out from 2.5 s so it's gone by 3 s
+   even if the page's script is slow; the script ends it earlier once the page has loaded */
+#wg-splash { animation: wg-splash-out .5s ease 2.5s forwards; }
+#wg-splash.wg-splash-leaving { animation: wg-splash-leave .5s ease forwards; }
+html[data-splash="off"] #wg-splash { display: none; }
+@keyframes wg-splash-out { to { opacity: 0; visibility: hidden; } }
+@keyframes wg-splash-leave { to { opacity: 0; visibility: hidden; } }
+.wg-splash-logo { animation: wg-splash-logo .7s ease-out both; }
+@keyframes wg-splash-logo {
+  from { opacity: 0; transform: scale(.96); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 /* events hero scroll cue */

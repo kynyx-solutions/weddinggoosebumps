@@ -1,24 +1,14 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Image from "next/image";
 
-// Pre-sized 448px WebPs served from public/ at fixed URLs: unlike bundled imports, their
-// names don't change between `next dev` and `next build`, so a rebuild can't 404 them.
-// Unoptimized and not `priority`, so they skip the optimizer and add no preload tags.
+// Pre-sized 448px WebPs (transparent, so they sit on the ivory) served from public/ at fixed
+// URLs: unlike bundled imports, their names don't change between `next dev` and `next build`,
+// so a rebuild can't 404 them. Unoptimized and not `priority`, so they skip the optimizer and
+// add no preload tags.
 const slides = ["/loader/couple.webp", "/loader/jaimala.webp", "/loader/phere.webp"];
+// Each slide's turn in the 2.7 s loop of .loader-slide (globals.css)
+const SLIDE_MS = 900;
 
 export default function Loader() {
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIndex((prev) => (prev + 1) % slides.length);
-    }, 900);
-
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#F8F5EF]">
       <div className="flex flex-col items-center">
@@ -33,7 +23,8 @@ export default function Loader() {
               fill
               unoptimized
               loading="eager"
-              className={`object-contain ${i === index ? "animate-fade" : "opacity-0"}`}
+              className="loader-slide object-contain"
+              style={{ animationDelay: `${i * SLIDE_MS}ms` }}
             />
           ))}
         </div>

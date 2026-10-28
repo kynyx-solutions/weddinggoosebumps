@@ -4,6 +4,12 @@ import ErrorReporter from "@/components/ErrorReporter";
 import NextTopLoader from "nextjs-toploader";
 import Script from "next/script";
 import UtmCapture from "@/components/utm-capture";
+import SplashScreen from "@/components/SplashScreen";
+
+// Runs before first paint: the opening logo screen (components/SplashScreen.tsx) is skipped in
+// admin, on the login page and once it has been seen in this tab. The "seen" mark is set here
+// rather than after React starts, so a reload during a slow first load doesn't show it twice.
+const SPLASH_GATE = `try{var p=location.pathname,k="wg-splash-seen";if(sessionStorage.getItem(k)||p.indexOf("/admin")===0||p.indexOf("/login")===0)document.documentElement.dataset.splash="off";else sessionStorage.setItem(k,"1")}catch(e){}`;
 
 export const metadata: Metadata = {
   title: {
@@ -22,8 +28,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    // suppressHydrationWarning: SPLASH_GATE may add data-splash before React hydrates
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: SPLASH_GATE }} />
         {/* Google Tag Manager */}
         <Script
           id="gtm-script"
@@ -98,6 +106,7 @@ export default function RootLayout({
         <ErrorReporter />
         <UtmCapture />
         <NextTopLoader color="#2563eb" height={3} showSpinner={false} />
+        <SplashScreen />
         {children}
       </body>
     </html>

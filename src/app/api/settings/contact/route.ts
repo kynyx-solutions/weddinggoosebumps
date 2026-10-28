@@ -55,13 +55,15 @@ export async function PUT(req: Request) {
       return NextResponse.json({ message: "The map link must start with https://" }, { status: 400 });
     }
 
+    // The map fields are only changed when sent: Site Settings no longer shows them, and saving
+    // there must not switch the Inquire page's map off
     const data = {
       whatsappNumber,
       whatsappMessage: text(json.whatsappMessage, 1000),
       whatsappEventMessage: text(json.whatsappEventMessage, 1000),
       contactAddress: text(json.contactAddress, 1000),
-      mapUrl,
-      showMap: json.showMap === true,
+      ...("mapUrl" in json && { mapUrl }),
+      ...("showMap" in json && { showMap: json.showMap === true }),
     };
 
     const settings = await prisma.globalSettings.upsert({

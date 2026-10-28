@@ -3,10 +3,11 @@
 
 export const ROLES = ["Super Admin", "Editor", "Marketing", "Viewer"] as const;
 
-export type Permission = "content" | "leads" | "seo" | "settings" | "users";
+// "activity": removing entries from the activity log
+export type Permission = "content" | "leads" | "seo" | "settings" | "users" | "activity";
 
 const GRANTS: Record<string, Permission[]> = {
-  "Super Admin": ["content", "leads", "seo", "settings", "users"],
+  "Super Admin": ["content", "leads", "seo", "settings", "users", "activity"],
   // Posts, events, site content, destinations, galleries, media
   Editor: ["content"],
   // Leads, SEO, redirects, contact and WhatsApp settings

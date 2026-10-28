@@ -114,24 +114,6 @@ export default function SeoSettings() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>robots.txt</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <textarea
-              className="flex min-h-[160px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 font-mono text-sm focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:outline-none"
-              value={settings.robotsTxt || ""}
-              placeholder={"Leave empty for the standard rules:\nUser-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nDisallow: /login\n\nSitemap: https://weddinggoosebumps.com/sitemap.xml"}
-              onChange={(e) => setSettings({ ...settings, robotsTxt: e.target.value })}
-            />
-            <p className="text-xs text-gray-500">
-              Applies on weddinggoosebumps.com only. Copies such as the beta site always tell
-              search engines to stay out.
-            </p>
-          </CardContent>
-        </Card>
-
         <Button type="submit" disabled={isSaving} className="w-full">
           {isSaving ? "Saving..." : "Save Settings"}
         </Button>

@@ -1,7 +1,9 @@
 import Link from "next/link";
 import prisma from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { getCurrentRole, requireAdmin } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { Card, CardContent } from "@/components/ui/card";
+import ActivityTable from "./ActivityTable";
 
 const PER_PAGE = 50;
 const timeFormat = new Intl.DateTimeFormat("en-IN", {
@@ -17,6 +19,7 @@ export default async function ActivityLogsList({
   searchParams: Promise<{ module?: string; user?: string; page?: string }>;
 }) {
   await requireAdmin();
+  const canRemove = can((await getCurrentRole()) ?? undefined, "activity");
   const { module, user, page: pageParam } = await searchParams;
   const where = {
     ...(module && { module }),
@@ -75,41 +78,18 @@ export default async function ActivityLogsList({
 
       <Card>
         <CardContent className="p-0">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="px-6 py-4 font-medium text-gray-900">Date</th>
-                <th className="px-6 py-4 font-medium text-gray-900">User</th>
-                <th className="px-6 py-4 font-medium text-gray-900">Action</th>
-                <th className="px-6 py-4 font-medium text-gray-900">Module</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {logs.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
-                    No activity logs found.
-                  </td>
-                </tr>
-              )}
-              {logs.map((log) => (
-                <tr key={log.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-gray-500">
-                    {timeFormat.format(log.createdAt)}
-                  </td>
-                  <td className="px-6 py-4 font-medium text-gray-900">
-                    {log.user?.name || log.user?.email || 'System'}
-                  </td>
-                  <td className="px-6 py-4 font-medium text-gray-900">
-                    {log.action}
-                  </td>
-                  <td className="px-6 py-4 text-gray-500">
-                    {log.module}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ActivityTable
+            logs={logs.map((log) => ({
+              id: log.id,
+              dateLabel: timeFormat.format(log.createdAt),
+              userLabel: log.user?.name || log.user?.email || "System",
+              action: log.action,
+              module: log.module,
+            }))}
+            canRemove={canRemove}
+            total={total}
+            filters={{ module, user }}
+          />
         </CardContent>
       </Card>
 

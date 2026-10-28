@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import prisma from "@/lib/prisma";
 import { getCurrentRole, requireAdmin } from "@/lib/auth";
-import { canSeeLeads } from "@/lib/permissions";
+import { can, canSeeLeads } from "@/lib/permissions";
 import { OPEN_LEAD_STATUSES } from "@/lib/leads";
+import { RemoveActivityButton } from "@/components/admin/remove-activity";
 
 const activityTime = new Intl.DateTimeFormat("en-IN", {
   dateStyle: "medium",
@@ -38,7 +39,9 @@ export default async function AdminDashboard({
 }) {
   await requireAdmin();
   const { denied } = await searchParams;
-  const showLeads = canSeeLeads((await getCurrentRole()) ?? undefined);
+  const role = (await getCurrentRole()) ?? undefined;
+  const showLeads = canSeeLeads(role);
+  const canRemoveActivity = can(role, "activity");
   const now = Date.now();
   const notSpam = { status: { not: "Spam" } };
   // Follow-ups are dates in India time; anything up to the end of today is due
@@ -270,7 +273,10 @@ export default async function AdminDashboard({
                       {log.action}
                       <span className="text-gray-500"> · {log.user?.name || log.user?.email || "System"}</span>
                     </span>
-                    <span className="text-xs text-gray-500">{activityTime.format(log.createdAt)}</span>
+                    <span className="flex items-center gap-2 text-xs text-gray-500">
+                      {activityTime.format(log.createdAt)}
+                      {canRemoveActivity && <RemoveActivityButton id={log.id} action={log.action} />}
+                    </span>
                   </li>
                 ))}
               </ul>

@@ -1,7 +1,7 @@
 import React from "react";
 import Image from "next/image";
 
-export default function blogJournal({ ART }) {
+export default function blogJournal({ ART }: { ART?: any }) {
   return (
     <>
       <section className="bg-ivory pt-16 pb-14 sm:pt-20 sm:pb-16 lg:pt-24 lg:pb-20">

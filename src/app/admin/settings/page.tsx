@@ -13,13 +13,12 @@ import {
   whatsappLink,
 } from "@/lib/whatsapp";
 
+// The map on the Inquire page (link and on/off) isn't edited here; saving leaves it as it is
 interface ContactForm {
   whatsappNumber: string;
   whatsappMessage: string;
   whatsappEventMessage: string;
   contactAddress: string;
-  mapUrl: string;
-  showMap: boolean;
 }
 
 const textareaClass =
@@ -43,8 +42,6 @@ export default function SiteSettings() {
           whatsappMessage: data.whatsappMessage || DEFAULT_WHATSAPP_MESSAGE,
           whatsappEventMessage: data.whatsappEventMessage || DEFAULT_WHATSAPP_EVENT_MESSAGE,
           contactAddress: data.contactAddress || DEFAULT_CONTACT_ADDRESS,
-          mapUrl: data.mapUrl || "",
-          showMap: data.showMap ?? true,
         })
       );
   }, []);
@@ -153,28 +150,6 @@ export default function SiteSettings() {
                 and given to Google. Press Enter to start a new line.
               </Hint>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="mapUrl">Google Maps link (optional)</Label>
-              <Input
-                id="mapUrl"
-                value={form.mapUrl}
-                placeholder="https://maps.app.goo.gl/..."
-                onChange={(e) => update({ mapUrl: e.target.value })}
-              />
-              <Hint>
-                Paste the Share link of your Google Maps listing so &quot;Get directions&quot; opens
-                exactly your studio. Left empty, it searches for the address.
-              </Hint>
-            </div>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={form.showMap}
-                onChange={(e) => update({ showMap: e.target.checked })}
-                className="h-4 w-4"
-              />
-              Show a map under the address
-            </label>
           </CardContent>
         </Card>
 
