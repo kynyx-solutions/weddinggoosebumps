@@ -18,8 +18,8 @@ import { getPostBySlug, isLive, postMetadata, readingTime, sectionContent } from
 
 export const dynamic = "force-dynamic";
 
-// Keeps the route loader and its illustrations on screen for 4 seconds before the post appears
-const LOADER_HOLD_MS = 4000;
+// Keeps the route loader up for one full round of its three illustrations (3 × 900 ms)
+const LOADER_HOLD_MS = 2700;
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   await new Promise((resolve) => setTimeout(resolve, LOADER_HOLD_MS));

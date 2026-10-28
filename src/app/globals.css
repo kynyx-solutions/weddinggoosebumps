@@ -248,9 +248,9 @@
   animation: loader-cycle 2.7s linear infinite both;
 }
 
-/* opening logo screen (components/SplashScreen.tsx): fades out from 2.5 s so it's gone by 3 s
+/* opening logo screen (components/SplashScreen.tsx): fades out from 2.2 s so it's gone by 2.7 s
    even if the page's script is slow; the script ends it earlier once the page has loaded */
-#wg-splash { animation: wg-splash-out .5s ease 2.5s forwards; }
+#wg-splash { animation: wg-splash-out .5s ease 2.2s forwards; }
 #wg-splash.wg-splash-leaving { animation: wg-splash-leave .5s ease forwards; }
 html[data-splash="off"] #wg-splash { display: none; }
 @keyframes wg-splash-out { to { opacity: 0; visibility: hidden; } }

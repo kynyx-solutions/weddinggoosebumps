@@ -10,7 +10,7 @@ import Image from "next/image";
 // script can't hold it longer. The head script in app/layout.tsx decides before first paint
 // whether it shows at all (and remembers that it has been seen).
 const MIN_MS = 1200;
-const MAX_MS = 3000;
+const MAX_MS = 2700; // keep in step with the fade-out delay of #wg-splash in globals.css
 const FADE_MS = 500;
 
 export default function SplashScreen() {
