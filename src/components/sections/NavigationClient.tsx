@@ -247,8 +247,10 @@ export default function NavigationClient({ eventLinks, whatsappHref }: Navigatio
                   </li>
                 ))}
 
-                {/* EVENTS DROPDOWN */}
-                <li className="group relative">
+                {/* EVENTS DROPDOWN — not `relative`, so the panel lines up with the (full-width,
+                    fixed) header rather than this item. The padding makes the item as tall as the
+                    header, so the pointer moves straight from EVENTS into the panel below it */}
+                <li className="group py-8">
                   <button className="font-lora text-charcoal hover:text-gold flex items-center gap-1 text-[11px] tracking-[0.2em] uppercase transition-colors duration-300">
                     EVENTS
                     <svg
@@ -264,9 +266,8 @@ export default function NavigationClient({ eventLinks, whatsappHref }: Navigatio
                     </svg>
                   </button>
 
-                  {/* Lined up with the right edge of EVENTS (the last item), so the panel never runs
-                      off the side of the screen */}
-                  <div className="invisible absolute top-full right-0 z-50 mt-6 w-72 rounded-md border border-[#e8e1d8] bg-white opacity-0 shadow-[0_12px_40px_rgba(0,0,0,0.08)] transition-all duration-300 group-hover:visible group-hover:opacity-100">
+                  {/* Flush with the right edge of the screen, directly under the header */}
+                  <div className="invisible absolute top-full right-0 z-50 w-72 rounded-l-md border border-r-0 border-[#e8e1d8] bg-white opacity-0 shadow-[0_12px_40px_rgba(0,0,0,0.08)] transition-all duration-300 group-hover:visible group-hover:opacity-100">
                     {/* Event Links: scroll once there are more than fit below the header, so every
                         event and "View All Events" stay reachable */}
                     <div className="max-h-[calc(100vh-13rem)] overflow-y-auto overscroll-contain py-3">
