@@ -6,10 +6,10 @@ import Script from "next/script";
 import UtmCapture from "@/components/utm-capture";
 import SplashScreen from "@/components/SplashScreen";
 
-// Runs before first paint: the opening logo screen (components/SplashScreen.tsx) is skipped in
-// admin, on the login page and once it has been seen in this tab. The "seen" mark is set here
-// rather than after React starts, so a reload during a slow first load doesn't show it twice.
-const SPLASH_GATE = `try{var p=location.pathname,k="wg-splash-seen";if(sessionStorage.getItem(k)||p.indexOf("/admin")===0||p.indexOf("/login")===0)document.documentElement.dataset.splash="off";else sessionStorage.setItem(k,"1")}catch(e){}`;
+// Runs before first paint: the opening logo screen (components/SplashScreen.tsx) shows only when the
+// site is opened on the home page, once per tab. The "seen" mark is set here rather than after React
+// starts, so a reload during a slow first load doesn't show it twice.
+const SPLASH_GATE = `try{var k="wg-splash-seen";if(location.pathname!=="/"||sessionStorage.getItem(k))document.documentElement.dataset.splash="off";else sessionStorage.setItem(k,"1")}catch(e){}`;
 
 export const metadata: Metadata = {
   title: {

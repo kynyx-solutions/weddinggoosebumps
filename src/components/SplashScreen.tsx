@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
-// The logo screen shown when someone opens the site: on the loader's ivory background, once per
-// visit (not on reloads in the same tab, and never in admin). It leaves as soon as the page has
+// The logo screen shown when someone opens the site on the home page: on the loader's ivory
+// background, once per visit (not on reloads in the same tab, not on any other page). It leaves as soon as the page has
 // loaded, after at least MIN_MS so the logo doesn't just flash, and is gone MAX_MS after it first
 // appeared at the latest. That limit is enforced in CSS (#wg-splash in globals.css), so a slow
 // script can't hold it longer. The head script in app/layout.tsx decides before first paint
