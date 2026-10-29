@@ -27,6 +27,9 @@ const navLinks = [
 
 const LOGO_URL = "/logo/Logo.png";
 
+// How events are named in the Events dropdowns: from the address, "post-wedding" → "Post Wedding"
+const eventLabel = (slug: string) => slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
 export default function NavigationClient({ eventLinks, whatsappHref }: NavigationClientProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -109,21 +112,22 @@ export default function NavigationClient({ eventLinks, whatsappHref }: Navigatio
             }`}
           >
             {/* Phones: centred on the ivory panel. sm and up: no background, so white type with
-                a soft shadow keeps it readable on the hero */}
-            <nav className="flex max-h-screen flex-col items-center overflow-y-auto px-8 pt-8 pb-12 text-center sm:pt-4 sm:pr-3 sm:pl-4 sm:drop-shadow-[0_1px_8px_rgba(0,0,0,0.45)] sm:[&_a]:pointer-events-auto sm:[&_button]:pointer-events-auto md:pt-5 md:pr-6 lg:pr-10">
+                a soft shadow keeps it readable on the hero; right-aligned, 16px from the screen's
+                right edge like the menu button */}
+            <nav className="flex max-h-screen flex-col items-center overflow-y-auto px-8 pt-8 pb-12 text-center sm:max-h-none sm:items-end sm:overflow-visible sm:pt-4 sm:pr-4 sm:pl-4 sm:text-right sm:drop-shadow-[0_1px_8px_rgba(0,0,0,0.45)] sm:[&_a]:pointer-events-auto sm:[&_button]:pointer-events-auto md:pt-5">
               <Link href="/" className="block h-10 w-28">
                 <Image
                   src={LOGO_URL}
                   alt="Wedding Goosebumps"
                   width={78}
                   height={31}
-                  className="h-full w-full object-contain sm:brightness-0 sm:invert"
+                  className="h-full w-full object-contain sm:object-right sm:brightness-0 sm:invert"
                 />
               </Link>
 
               <div className="my-6 h-px w-12 bg-[#D9D5CF] sm:bg-white/60" />
 
-              <ul className="flex flex-col items-center gap-y-5">
+              <ul className="flex flex-col items-center gap-y-5 sm:items-end">
                 {navLinks.map((link) => (
                   <li key={`${link.name}-hero`}>
                     <Link
@@ -135,15 +139,43 @@ export default function NavigationClient({ eventLinks, whatsappHref }: Navigatio
                   </li>
                 ))}
 
-                {/* EVENTS — sm+: a plain link, since long event titles overflow the narrow
-                    see-through menu; phones keep the expandable list on the ivory panel */}
+                {/* EVENTS — sm+: hovering (or tabbing to) it opens the list of events to its left,
+                    styled like the header's Events dropdown; phones keep the expandable list on
+                    the ivory panel */}
                 <li>
-                  <Link
-                    href="/events"
-                    className="font-lora hover:text-gold hidden text-[13px] tracking-[0.2em] text-white transition-colors duration-300 sm:block"
-                  >
-                    EVENTS
-                  </Link>
+                  <div className="group relative hidden sm:block">
+                    <Link
+                      href="/events"
+                      className="font-lora hover:text-gold group-hover:text-gold block text-[13px] tracking-[0.2em] text-white transition-colors duration-300"
+                    >
+                      EVENTS
+                    </Link>
+
+                    {/* pointer-events-auto: the menu around it is see-through to clicks; the right
+                        padding is part of the hover area, so the pointer can cross into the list */}
+                    <div className="pointer-events-auto invisible absolute -top-6 right-full z-50 pr-5 opacity-0 transition-all duration-300 group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
+                      <div className="w-72 rounded-md border border-[#e8e1d8] bg-white text-left shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
+                        <div className="no-scrollbar max-h-[max(10rem,calc(100vh-28rem))] overflow-y-auto overscroll-contain py-3">
+                          {eventLinks.map((item) => (
+                            <Link
+                              key={item.slug}
+                              href={`/events/${item.slug}`}
+                              className="font-lora text-charcoal hover:text-gold hover:bg-ivory block px-6 py-3 text-[11px] tracking-[0.2em] uppercase transition-colors duration-200"
+                            >
+                              {eventLabel(item.slug)}
+                            </Link>
+                          ))}
+                        </div>
+                        <div className="mx-6 border-t border-[#ebe6de]" />
+                        <Link
+                          href="/events"
+                          className="font-lora text-gold hover:bg-ivory block px-6 py-4 text-[11px] tracking-[0.2em] uppercase transition-colors duration-200"
+                        >
+                          View All Events →
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
 
                   <button
                     type="button"
@@ -189,8 +221,9 @@ export default function NavigationClient({ eventLinks, whatsappHref }: Navigatio
             </nav>
           </div>
 
-          {/* Trigger — same box as the header so it stays put when the panel opens */}
-          <div className="relative flex h-[64px] items-center justify-end px-4 sm:h-[72px] sm:px-6 md:h-[81px] md:px-10 lg:px-16">
+          {/* Trigger — same height as the header so it stays put when the panel opens; 16px from
+              the right edge, lined up with the menu's links */}
+          <div className="relative flex h-[64px] items-center justify-end px-4 sm:h-[72px] md:h-[81px]">
             {/* Hidden while the menu is open so only the menu shows in the corner;
                 an outside click, Escape or a link closes it */}
             <button
@@ -277,7 +310,7 @@ export default function NavigationClient({ eventLinks, whatsappHref }: Navigatio
                           href={`/events/${item.slug}`}
                           className="font-lora text-charcoal hover:text-gold hover:bg-ivory block px-6 py-3 text-[11px] tracking-[0.2em] uppercase transition-colors duration-200"
                         >
-                          {item.slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                          {eventLabel(item.slug)}
                         </Link>
                       ))}
                     </div>
