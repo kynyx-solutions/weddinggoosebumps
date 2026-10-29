@@ -18,11 +18,8 @@ import { getPostBySlug, isLive, postMetadata, readingTime, sectionContent } from
 
 export const dynamic = "force-dynamic";
 
-// Keeps the route loader up for one full round of its three illustrations (3 × 900 ms)
-const LOADER_HOLD_MS = 2700;
-
+// No loader and no waiting: Events has no loading.tsx, so a post opens as soon as it's ready
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
-  await new Promise((resolve) => setTimeout(resolve, LOADER_HOLD_MS));
   const { slug } = await params;
 
   const finalPost = await getPostBySlug(slug);
