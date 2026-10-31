@@ -20,7 +20,7 @@ async function main() {
 
   console.log({ admin });
 
-  // Migrate Home
+  // Migrate Home Page
   const homePage = await prisma.page.upsert({
     where: { slug: '/' },
     update: {},
