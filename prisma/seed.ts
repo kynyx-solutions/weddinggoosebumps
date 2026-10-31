@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 async function main() {
   // Create admin user
   const hashedPassword = await bcrypt.hash('Zr@2026#', 10);
-  
+
   const admin = await prisma.user.upsert({
     where: { email: 'adminZr@gmail.com' },
     update: {},
@@ -20,7 +20,7 @@ async function main() {
 
   console.log({ admin });
 
-  // Migrate Home Page
+  // Migrate Home
   const homePage = await prisma.page.upsert({
     where: { slug: '/' },
     update: {},
